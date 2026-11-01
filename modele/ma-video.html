@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Je comprends une vidéo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Appli élève générique : fonctionne avec N'IMPORTE QUELLE vidéo (YouTube, lien MP4, fichier de l'ordinateur).
+     Aucune préparation par l'enseignant n'est nécessaire. Rien n'est envoyé sur internet : tout reste dans le navigateur. -->
+<style>
+:root{--bleu:#1d4ed8;--bleu-c:#eff6ff;--vert:#15803d;--vert-c:#ecfdf5;--encre:#0f172a;--gris:#475569;--bord:#dbe3ef;--orange-c:#fffbeb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:var(--encre);line-height:1.5}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+header{background:linear-gradient(135deg,#0f172a,#1e3a8a 60%,#166534);color:#fff;padding:26px 0 22px}
+h1{font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:900;margin:6px 0;line-height:1.1}
+header p{color:#dbeafe;margin:0;max-width:820px}
+.kicker{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:3px 12px;border-radius:999px;font-size:.85rem;font-weight:700}
+.btn{border:0;border-radius:12px;padding:9px 16px;font-weight:800;font-size:.92rem;text-decoration:none;display:inline-block}
+.btn-bleu{background:var(--bleu);color:#fff}.btn-vert{background:var(--vert);color:#fff}
+.btn-blanc{background:#fff;color:var(--encre);border:1px solid var(--bord)}
+.btn-clair{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn-p{padding:6px 11px;font-size:.82rem;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.carte{background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 10px 30px -22px rgba(15,23,42,.5);padding:22px}
+.soft{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-top:12px}
+.label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--bleu)}
+h2{font-size:1.45rem;font-weight:900;margin:2px 0 4px}
+h3{font-size:1.02rem;font-weight:900;margin:0 0 6px}
+.muted{color:var(--gris)}
+section{margin-top:22px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cache{display:none!important}
+.c{width:100%;border:2px solid #cbd5e1;border-radius:12px;padding:9px 12px;background:#fff;margin-top:4px}
+.c:focus{border-color:var(--bleu);outline:none}
+textarea.c{min-height:80px;resize:vertical}
+label.f{display:block;margin-top:10px;font-weight:700}
+label.f small{font-weight:500;color:var(--gris)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+/* choix vidéo */
+.choix{max-width:860px;margin:30px auto}
+.source{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.source>div{border:1px solid var(--bord);border-radius:16px;padding:14px;background:#fff}
+/* travail */
+.tabs{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px;margin-top:10px}
+.tab{min-width:170px;text-align:left;border:1px solid var(--bord);background:#fff;border-radius:16px;padding:9px 13px;color:#334155}
+.tab small{display:block;font-weight:700;font-size:.75rem;opacity:.8}.tab strong{display:block}
+.tab.active{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.tab.ok small::after{content:" ✓";color:#16a34a;font-weight:900}.tab.active.ok small::after{color:#bbf7d0}
+.progress{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--bleu),var(--vert));transition:width .4s}
+.workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start}
+.sticky{position:sticky;top:12px}
+@media(max-width:980px){.workspace{grid-template-columns:1fr}.sticky{position:static}}
+.video{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#020617}
+.video video,.video iframe{width:100%;height:100%;border:0;display:block}
+.chrono{background:var(--bleu-c);color:var(--bleu);border:1px solid #bfdbfe;border-radius:8px;padding:5px 8px;font-weight:800;font-size:.8rem;white-space:nowrap}
+.moment{background:#fff;color:var(--bleu);border:1px solid #bfdbfe;border-radius:999px;padding:2px 9px;font-weight:800;font-size:.78rem}
+.chip{border:1px solid var(--bord);background:#fff;border-radius:999px;padding:5px 11px;font-weight:700;font-size:.86rem}
+.chip.on{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.aides{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.aide-txt{background:var(--orange-c);border:1px solid #fde68a;border-radius:12px;padding:12px}
+.ligne-info{display:grid;grid-template-columns:130px 1fr auto;gap:8px;align-items:center;margin-top:8px}
+@media(max-width:560px){.ligne-info{grid-template-columns:1fr}}
+.ligne-info b{font-size:.92rem}
+.mot{border:1px solid #e2e8f0;border-radius:14px;padding:10px 12px;margin-top:8px;background:#fff;display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:start}
+@media(max-width:560px){.mot{grid-template-columns:1fr}}
+.feedback{margin-top:14px;border-radius:14px;padding:12px 14px;font-weight:700}
+.feedback.ok{background:var(--vert-c);border:1px solid #86efac;color:#166534}
+.feedback.ko{background:var(--orange-c);border:1px solid #fcd34d;color:#92400e}
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px}
+.compteur{font-size:1.4rem;font-weight:900;font-variant-numeric:tabular-nums}
+.trace-box{background:var(--vert-c);border:1px solid #86efac;border-radius:14px;padding:14px;font-weight:600;white-space:pre-line}
+.verrou{opacity:.55;pointer-events:none;filter:grayscale(.4)}
+.niveaux{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.niveaux label{border:1px solid var(--bord);border-radius:999px;padding:4px 12px;cursor:pointer;font-weight:700;font-size:.85rem;background:#fff}
+.niveaux input{display:none}
+.niveaux label:has(input:checked){background:var(--bleu-c);border-color:var(--bleu);color:var(--bleu)}
+.amorce{display:block;width:100%;text-align:left;border:1px dashed #93c5fd;background:var(--bleu-c);border-radius:10px;padding:7px 10px;margin-top:6px;font-weight:700;color:#1e3a8a}
+.compte{font-size:.85rem;font-weight:700}
+.compte.ok{color:var(--vert)}
+@media print{body *{visibility:hidden}#zoneImpression,#zoneImpression *{visibility:visible}#zoneImpression{position:absolute;left:0;top:0;width:100%}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="kicker" id="kicker">Je travaille avec une vidéo</span>
+    <h1 id="titrePage">Je comprends une vidéo</h1>
+    <p id="sousTitrePage">Je choisis une vidéo. L’appli m’aide à la comprendre en 4 étapes : je découvre, je repère, je retiens, j’explique.</p>
+    <div class="row" style="margin-top:14px">
+      <label style="font-weight:700;font-size:.9rem">Aide dans ma langue :
+        <select id="maLangue" class="c" style="width:auto;display:inline-block;margin-left:6px;padding:5px 8px" onchange="changerLangue(this.value)"></select></label>
+      <button class="btn btn-clair btn-p cache" id="btnAutreVideo" onclick="autreVideo()">Changer de vidéo</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ ÉCRAN 1 : CHOIX DE LA VIDÉO ============ -->
+<main class="wrap" id="ecranChoix">
+  <div class="choix carte">
+    <div class="label">Étape 0</div>
+    <h2>Je choisis ma vidéo</h2>
+    <p class="muted">Ta vidéo peut venir de YouTube, d’un lien internet ou de ton ordinateur.</p>
+    <div class="source">
+      <div><h3>▶ Un lien YouTube</h3><input class="c" id="lienYT" placeholder="https://www.youtube.com/watch?v=…"></div>
+      <div><h3>🔗 Un lien vers une vidéo</h3><input class="c" id="lienMP4" placeholder="https://…/video.mp4"><p class="muted" style="font-size:.82rem;margin:6px 0 0">Un lien qui finit par .mp4 ou .webm.</p></div>
+      <div><h3>💻 Un fichier de mon ordinateur</h3><label class="btn btn-blanc btn-p" style="cursor:pointer;margin-top:4px">Choisir le fichier<input type="file" accept="video/*" class="cache" id="fichier" onchange="choisirFichier(this)"></label><p class="muted" id="nomFichier" style="font-size:.82rem;margin:6px 0 0">La vidéo reste sur l’ordinateur, elle n’est envoyée nulle part.</p></div>
+    </div>
+    <div class="grid2" style="margin-top:6px">
+      <label class="f">Le titre de la vidéo <small>(si je le connais)</small><input class="c" id="titreVideo" placeholder="Ex. : Les volcans"></label>
+      <label class="f">La matière <small>(facultatif)</small><input class="c" id="matiere" placeholder="Ex. : Géographie, SVT, Histoire…"></label>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn btn-bleu" onclick="commencer()">Commencer →</button>
+    </div>
+    <div id="erreurChoix" class="feedback ko cache"></div>
+    <div id="reprises"></div>
+  </div>
+  <p class="muted" style="text-align:center;font-size:.85rem">Enseignant ? Tu peux aussi <a href="editeur.html">préparer un parcours précis</a> pour une vidéo donnée.</p>
+</main>
+
+<!-- ============ ÉCRAN 2 : LE TRAVAIL ============ -->
+<main class="wrap cache" id="ecranTravail">
+  <section class="carte">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="label">Je travaille en 4 étapes</div><h2 id="titreHaut"></h2></div>
+      <div style="min-width:200px"><b>Progression <span id="progTxt"></span></b><div class="progress"><div id="progBar"></div></div></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </section>
+
+  <section class="workspace">
+    <div class="sticky">
+      <div class="carte">
+        <div class="label">Ma vidéo</div>
+        <h2 id="nomVideo">Je regarde</h2>
+        <div class="video" id="lecteur" style="margin-top:8px"></div>
+        <div class="row" style="justify-content:space-between;margin-top:10px">
+          <div><span class="muted" style="font-size:.85rem">Moment de la vidéo</span><div class="compteur" id="compteur">0:00</div></div>
+          <div class="row">
+            <button class="btn btn-blanc btn-p" onclick="reculer()">⟲ Reculer de 5 s</button>
+            <label class="muted" style="font-size:.85rem;font-weight:700">Vitesse
+              <select id="vitesse" class="c" style="width:auto;display:inline-block;padding:4px 6px" onchange="L.vitesse(+this.value)">
+                <option value="1">normale</option><option value="0.75">un peu lente</option><option value="0.5">lente</option></select></label>
+          </div>
+        </div>
+        <div class="soft">
+          <h3>Mes aides vidéo</h3>
+          <ul class="muted" style="margin:0;padding-left:18px;font-size:.9rem">
+            <li>Je peux <b>ralentir</b> la vidéo et <b>reculer de 5 secondes</b>.</li>
+            <li id="aideCC">Sur YouTube, je peux activer les <b>sous-titres</b> avec le bouton <b>CC</b> du lecteur.</li>
+            <li>Le bouton <span class="chrono">⏱</span> garde le moment de la vidéo. Ensuite, je clique sur le moment pour revoir le passage.</li>
+          </ul>
+        </div>
+        <div class="soft">
+          <h3>Mes notes d’écoute</h3>
+          <textarea class="c" id="notes" placeholder="J’écris ici les mots ou les idées que j’entends, comme je veux." oninput="sauver()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <div class="label">Activité · <span id="badge"></span></div>
+      <h2 id="titreEtape"></h2>
+      <p class="muted" id="introEtape" style="margin:0"></p>
+      <div class="aides">
+        <b style="align-self:center">Besoin d’aide ?</b>
+        <button class="chip" onclick="aide('objectif',this)">Mon objectif</button>
+        <button class="chip" onclick="aide('methode',this)">Comment faire</button>
+        <button class="chip" id="btnTrad" onclick="aide('langue',this)">Dans ma langue</button>
+      </div>
+      <div id="aideTxt" class="aide-txt cache"></div>
+      <div id="corps"></div>
+      <div id="feedback" class="feedback cache" aria-live="polite"></div>
+      <div class="nav">
+        <button class="btn btn-blanc" id="btnPrec" onclick="aller(etape-1)">← Précédent</button>
+        <button class="btn btn-vert" onclick="valider()">Vérifier et valider</button>
+        <button class="btn btn-blanc" id="btnSuiv" onclick="aller(etape+1)">Suivant →</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="carte verrou" id="trace">
+    <div class="label">Trace de travail</div>
+    <h2>Je garde une trace de ce que j’ai compris</h2>
+    <p class="muted" id="traceInfo">Cette partie s’ouvre quand les 4 étapes sont validées.</p>
+    <div class="grid2">
+      <div class="soft">
+        <h3>Mon bilan personnel</h3>
+        <label class="f">Ce que j’ai bien compris<textarea class="c" id="bilan1" oninput="sauver()"></textarea></label>
+        <label class="f">Ce que je dois encore travailler<textarea class="c" id="bilan2" oninput="sauver()"></textarea></label>
+        <label class="f">Les aides qui m’ont été utiles<textarea class="c" id="bilan3" oninput="sauver()"></textarea></label>
+      </div>
+      <div class="soft"><h3>Je m’évalue</h3><div id="autoeval"></div></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn btn-vert" onclick="genererTrace()">Générer ma trace</button>
+      <button class="btn btn-blanc" onclick="copierTrace()">Copier</button>
+      <button class="btn btn-blanc" onclick="genererTrace();print()">Imprimer / PDF</button>
+      <button class="btn btn-blanc" onclick="telecharger()">Télécharger (.txt)</button>
+    </div>
+    <div id="zoneImpression" style="margin-top:14px"><div id="traceFinale" class="trace-box">Clique sur « Générer ma trace ».</div></div>
+  </section>
+  <p class="muted" style="text-align:center;font-size:.8rem;margin:30px 0">Mon travail est enregistré dans ce navigateur. Je peux fermer la page et revenir plus tard avec la même vidéo.</p>
+</main>
+
+<script src="lecteur-video.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const nbMots=s=>String(s||"").trim().split(/\s+/).filter(Boolean).length;
+
+/* ================= Textes d'aide, dans plusieurs langues ================= */
+const LANGUES={fr:"Français",en:"English",es:"Español",pt:"Português",ar:"العربية",tr:"Türkçe",uk:"Українська",ru:"Русский",ro:"Română",sq:"Shqip",it:"Italiano"};
+const RTL=new Set(["ar"]);
+const TRAD={
+ decouvrir:{
+  en:"Watch the whole video once, without stopping. Then say what kind of video it is, what it is about, and who, where, when.",
+  es:"Mira el vídeo entero una vez, sin parar. Después di qué tipo de vídeo es, de qué habla, y quién, dónde y cuándo.",
+  pt:"Assiste ao vídeo inteiro uma vez, sem parar. Depois diz que tipo de vídeo é, de que fala, e quem, onde e quando.",
+  ar:"شاهد الفيديو كاملًا مرة واحدة دون توقف. ثم قل ما نوع الفيديو، وعمّ يتحدث، ومن، وأين، ومتى.",
+  tr:"Videoyu bir kez baştan sona durmadan izle. Sonra videonun türünü, konusunu, kim, nerede ve ne zaman olduğunu söyle.",
+  uk:"Подивись усе відео один раз, не зупиняючи. Потім скажи, що це за відео, про що воно, хто, де і коли.",
+  ru:"Посмотри всё видео один раз, не останавливая. Потом скажи, что это за видео, о чём оно, кто, где и когда.",
+  ro:"Privește tot videoclipul o dată, fără să te oprești. Apoi spune ce fel de video este, despre ce vorbește, cine, unde și când.",
+  sq:"Shiko të gjithë videon një herë, pa e ndalur. Pastaj thuaj çfarë lloj videoje është, për çfarë flet, kush, ku dhe kur.",
+  it:"Guarda tutto il video una volta, senza fermarti. Poi di’ che tipo di video è, di cosa parla, chi, dove e quando."},
+ reperer:{
+  en:"Watch again and find important information: who, what, where, when, how many (a number), why. Click ⏱ to save the moment in the video. Fill in at least 4 lines.",
+  es:"Vuelve a mirar y busca información importante: quién, qué, dónde, cuándo, cuántos (un número), por qué. Haz clic en ⏱ para guardar el momento. Completa al menos 4 líneas.",
+  pt:"Vê outra vez e procura informações importantes: quem, o quê, onde, quando, quantos (um número), porquê. Clica em ⏱ para guardar o momento. Completa pelo menos 4 linhas.",
+  ar:"شاهد مرة أخرى وابحث عن المعلومات المهمة: من، ماذا، أين، متى، كم (رقم)، لماذا. اضغط على ⏱ لحفظ لحظة الفيديو. املأ 4 أسطر على الأقل.",
+  tr:"Tekrar izle ve önemli bilgileri bul: kim, ne, nerede, ne zaman, kaç (bir sayı), neden. Videodaki anı kaydetmek için ⏱ düğmesine tıkla. En az 4 satır doldur.",
+  uk:"Подивись ще раз і знайди важливу інформацію: хто, що, де, коли, скільки (число), чому. Натисни ⏱, щоб зберегти момент у відео. Заповни щонайменше 4 рядки.",
+  ru:"Посмотри ещё раз и найди важную информацию: кто, что, где, когда, сколько (число), почему. Нажми ⏱, чтобы сохранить момент видео. Заполни не меньше 4 строк.",
+  ro:"Privește din nou și caută informațiile importante: cine, ce, unde, când, cât (un număr), de ce. Apasă ⏱ ca să salvezi momentul. Completează cel puțin 4 rânduri.",
+  sq:"Shiko përsëri dhe gjej informacionet e rëndësishme: kush, çfarë, ku, kur, sa (një numër), pse. Kliko ⏱ për të ruajtur momentin. Plotëso të paktën 4 rreshta.",
+  it:"Guarda di nuovo e trova le informazioni importanti: chi, che cosa, dove, quando, quanti (un numero), perché. Clicca ⏱ per salvare il momento. Completa almeno 4 righe."},
+ retenir:{
+  en:"Choose at least 5 important words from the video. For each word, write what it means (in French or in your language) and its type. Use ⏱ to save when you hear it.",
+  es:"Elige al menos 5 palabras importantes del vídeo. Para cada palabra, escribe qué significa (en francés o en tu idioma) y su tipo. Usa ⏱ para guardar cuándo la oyes.",
+  pt:"Escolhe pelo menos 5 palavras importantes do vídeo. Para cada palavra, escreve o que significa (em francês ou na tua língua) e o seu tipo. Usa ⏱ para guardar quando a ouves.",
+  ar:"اختر 5 كلمات مهمة على الأقل من الفيديو. لكل كلمة، اكتب معناها (بالفرنسية أو بلغتك) ونوعها. استعمل ⏱ لحفظ اللحظة التي تسمعها فيها.",
+  tr:"Videodan en az 5 önemli kelime seç. Her kelime için anlamını (Fransızca ya da kendi dilinde) ve türünü yaz. Duyduğun anı kaydetmek için ⏱ kullan.",
+  uk:"Вибери щонайменше 5 важливих слів із відео. Для кожного слова напиши, що воно означає (французькою або своєю мовою), і його тип. Натисни ⏱, щоб зберегти момент.",
+  ru:"Выбери не меньше 5 важных слов из видео. Для каждого слова напиши, что оно значит (по-французски или на своём языке), и его тип. Нажми ⏱, чтобы сохранить момент.",
+  ro:"Alege cel puțin 5 cuvinte importante din video. Pentru fiecare cuvânt, scrie ce înseamnă (în franceză sau în limba ta) și tipul lui. Folosește ⏱ ca să salvezi momentul.",
+  sq:"Zgjidh të paktën 5 fjalë të rëndësishme nga videoja. Për çdo fjalë, shkruaj çfarë do të thotë (në frëngjisht ose në gjuhën tënde) dhe llojin e saj. Përdor ⏱ për të ruajtur momentin.",
+  it:"Scegli almeno 5 parole importanti del video. Per ogni parola, scrivi cosa significa (in francese o nella tua lingua) e il suo tipo. Usa ⏱ per salvare il momento."},
+ expliquer:{
+  en:"Explain the video in French with at least 3 sentences. Click a sentence starter to begin, then complete it. Use at least 2 words from your word list.",
+  es:"Explica el vídeo en francés con al menos 3 frases. Haz clic en un inicio de frase y complétalo. Usa al menos 2 palabras de tu lista.",
+  pt:"Explica o vídeo em francês com pelo menos 3 frases. Clica num início de frase e completa-o. Usa pelo menos 2 palavras da tua lista.",
+  ar:"اشرح الفيديو بالفرنسية في 3 جمل على الأقل. اضغط على بداية جملة ثم أكملها. استعمل كلمتين على الأقل من قائمة كلماتك.",
+  tr:"Videoyu Fransızca en az 3 cümleyle açıkla. Bir cümle başlangıcına tıkla ve tamamla. Kelime listenden en az 2 kelime kullan.",
+  uk:"Поясни відео французькою щонайменше трьома реченнями. Натисни на початок речення й доповни його. Використай щонайменше 2 слова зі свого списку.",
+  ru:"Объясни видео по-французски не меньше чем в 3 предложениях. Нажми на начало предложения и закончи его. Используй не меньше 2 слов из своего списка.",
+  ro:"Explică videoclipul în franceză în cel puțin 3 propoziții. Apasă pe un început de propoziție și completează-l. Folosește cel puțin 2 cuvinte din lista ta.",
+  sq:"Shpjego videon në frëngjisht me të paktën 3 fjali. Kliko mbi një fillim fjalie dhe plotësoje. Përdor të paktën 2 fjalë nga lista jote.",
+  it:"Spiega il video in francese con almeno 3 frasi. Clicca su un inizio di frase e completalo. Usa almeno 2 parole della tua lista."}
+};
+
+/* ================= Les 4 étapes génériques ================= */
+const TYPES_VIDEO=["un reportage","un documentaire","un cours / une explication","une interview","une animation","un débat","une publicité","autre"];
+const INFOS=[["qui","Qui ?","les personnes, les groupes"],["quoi","Quoi ?","ce qui se passe, l’action"],["ou","Où ?","le lieu, le pays, la région"],["quand","Quand ?","la date, l’époque, le moment"],["combien","Combien ?","un chiffre, une quantité"],["pourquoi","Pourquoi ?","une cause, une raison"]];
+const CATEGORIES=["une personne / un acteur","un lieu","une action","un chiffre","une notion","autre"];
+const AMORCES=["Cette vidéo parle de…","On voit / on apprend que…","Les acteurs sont…","Cela se passe…","C’est important parce que…","Cela a pour conséquence…","Pourtant / Mais…","Je retiens que…"];
+const ETAPES=[
+ {id:"decouvrir",badge:"Je découvre",court:"La vidéo en entier",titre:"Étape 1 – Je découvre la vidéo",intro:"Je regarde toute la vidéo une fois, sans m’arrêter. Je cherche l’idée générale.",
+  objectif:"Comprendre de quoi parle la vidéo de façon générale, sans chercher tous les détails.",
+  methode:"Regarde d’abord les images : elles aident beaucoup. Écoute les mots qui reviennent souvent. Ne t’arrête pas sur les mots difficiles."},
+ {id:"reperer",badge:"Je repère",court:"Les informations",titre:"Étape 2 – Je repère les informations importantes",intro:"Je regarde à nouveau et je relève les informations principales.",
+  objectif:"Repérer les informations importantes : qui, quoi, où, quand, combien, pourquoi.",
+  methode:"Mets la vidéo en pause quand tu entends une information. Clique sur ⏱ pour garder le moment. Tu peux ralentir la vidéo ou reculer de 5 secondes."},
+ {id:"retenir",badge:"Je retiens",court:"Mes mots",titre:"Étape 3 – Je retiens les mots importants",intro:"Je construis mon lexique : les mots utiles pour comprendre et pour expliquer la vidéo.",
+  objectif:"Retenir au moins 5 mots importants de la vidéo et savoir ce qu’ils veulent dire.",
+  methode:"Choisis des mots qui reviennent souvent ou qui sont dans le titre. Si tu ne connais pas un mot, utilise le bouton « Traduire » ou demande à ton professeur."},
+ {id:"expliquer",badge:"J’explique",court:"Avec mes mots",titre:"Étape 4 – J’explique avec mes mots",intro:"J’écris un petit texte pour expliquer la vidéo, avec les mots de mon lexique.",
+  objectif:"Expliquer la vidéo en français, en 3 phrases au moins, avec les mots que j’ai retenus.",
+  methode:"Clique sur un début de phrase, puis complète-le. Clique sur tes mots pour les ajouter. Utilise « parce que » pour expliquer une cause."}
+];
+const OBJECTIFS=["Je sais dire de quoi parle une vidéo.","Je sais repérer des informations importantes.","Je sais retenir et expliquer des mots nouveaux.","Je sais expliquer une vidéo avec mes mots en français."];
+
+/* ================= État ================= */
+let V=null;            // {src, nom, titre, matiere, local}
+let L=null, etape=0, valides=new Set(), R=freshR(), langue="fr";
+function freshR(){ return {decouvrir:{},reperer:{},mots:[],texte:"",notes:"",bilan:["","",""],auto:{}}; }
+const cle=()=>"mavideo:"+(V.local?"fichier:"+V.nom:V.src);
+
+function sauver(){
+  if(!V) return; lireEtape();
+  R.notes=$("notes").value; R.bilan=[1,2,3].map(i=>$("bilan"+i).value);
+  document.querySelectorAll("#autoeval input:checked").forEach(r=>R.auto[r.name]=r.value);
+  try{ localStorage.setItem(cle(),JSON.stringify({V:{...V,src:V.local?"":V.src},etape,valides:[...valides],R,date:Date.now()})); localStorage.setItem("mavideo:langue",langue);}catch(e){}
+}
+function charger(){
+  try{ const d=JSON.parse(localStorage.getItem(cle())||"null"); if(!d) return false;
+    etape=d.etape||0; valides=new Set(d.valides||[]); R=Object.assign(freshR(),d.R||{}); return true; }catch(e){ return false; }
+}
+
+/* ================= Choix de la vidéo ================= */
+let fichierChoisi=null;
+function choisirFichier(inp){ fichierChoisi=inp.files[0]||null; $("nomFichier").textContent=fichierChoisi?"✔ "+fichierChoisi.name:""; if(fichierChoisi&&!$("titreVideo").value) $("titreVideo").value=fichierChoisi.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "); }
+function commencer(){
+  const yt=$("lienYT").value.trim(), mp4=$("lienMP4").value.trim(), err=$("erreurChoix");
+  err.classList.add("cache");
+  if(yt){ if(!idYouTube(yt)) return erreur("Ce lien YouTube n’est pas reconnu. Copie l’adresse de la vidéo depuis YouTube."); V={src:yt,nom:yt,local:false}; }
+  else if(mp4){ if(!/^https?:\/\//.test(mp4)) return erreur("Le lien doit commencer par http:// ou https://"); V={src:mp4,nom:mp4.split("/").pop(),local:false}; }
+  else if(fichierChoisi){ V={src:URL.createObjectURL(fichierChoisi),nom:fichierChoisi.name,local:true}; }
+  else return erreur("Choisis d’abord une vidéo : un lien YouTube, un lien vers une vidéo ou un fichier.");
+  V.titre=$("titreVideo").value.trim(); V.matiere=$("matiere").value.trim();
+  ouvrirTravail();
+}
+function erreur(m){ const e=$("erreurChoix"); e.textContent=m; e.classList.remove("cache"); }
+function ouvrirTravail(){
+  etape=0; valides=new Set(); R=freshR();
+  const repris=charger();
+  $("ecranChoix").classList.add("cache"); $("ecranTravail").classList.remove("cache"); $("btnAutreVideo").classList.remove("cache");
+  $("titrePage").textContent=V.titre||"Je comprends une vidéo";
+  $("kicker").textContent=V.matiere?V.matiere+" – je travaille avec une vidéo":"Je travaille avec une vidéo";
+  $("titreHaut").textContent=V.titre||V.nom; $("nomVideo").textContent=V.titre||"Je regarde";
+  L=creerLecteur($("lecteur"),V.src,t=>$("compteur").textContent=formatTemps(t));
+  $("aideCC").classList.toggle("cache",L.type!=="youtube");
+  $("notes").value=R.notes||""; R.bilan.forEach((v,i)=>$("bilan"+(i+1)).value=v||"");
+  rendreAutoeval(); afficher();
+  if(valides.size===4) genererTrace();
+  history.replaceState(null,"",location.pathname+(V.local?"":"?video="+encodeURIComponent(V.src))+(V.titre&&!V.local?"&titre="+encodeURIComponent(V.titre):""));
+  if(repris) feedback(true,"Je reprends mon travail là où je l’avais laissé.");
+  scrollTo(0,0);
+}
+function autreVideo(){ sauver(); if(L&&L.pause) L.pause(); location.href=location.pathname; }
+function listerReprises(){
+  const items=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k.startsWith("mavideo:")&&k!=="mavideo:langue"){ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.V) items.push(d);} } }catch(e){}
+  items.sort((a,b)=>b.date-a.date);
+  if(!items.length) return;
+  $("reprises").innerHTML=`<div class="soft"><h3>Reprendre une vidéo déjà commencée</h3>${items.slice(0,6).map((d,i)=>`<div class="row" style="justify-content:space-between;margin-top:6px"><span><b>${esc(d.V.titre||d.V.nom)}</b> <span class="muted">· ${d.valides.length}/4 étapes</span></span>
+    ${d.V.local?`<span class="muted" style="font-size:.82rem">fichier de l’ordinateur : choisis-le à nouveau ci-dessus</span>`:`<button class="btn btn-blanc btn-p" onclick='reprendre(${JSON.stringify(JSON.stringify(d.V))})'>Reprendre</button>`}</div>`).join("")}</div>`;
+}
+function reprendre(json){ V=JSON.parse(json); ouvrirTravail(); }
+
+/* ================= Affichage des étapes ================= */
+function onglets(){
+  $("tabs").innerHTML=ETAPES.map((s,i)=>`<button class="tab ${i===etape?"active":""} ${valides.has(i)?"ok":""}" onclick="aller(${i})"><small>Étape ${i+1}</small><strong>${s.badge}</strong><small>${s.court}</small></button>`).join("");
+  $("progTxt").textContent=`${valides.size} / 4`; $("progBar").style.width=(25*valides.size)+"%";
+  const fini=valides.size===4; $("trace").classList.toggle("verrou",!fini);
+  $("traceInfo").textContent=fini?"Toutes les étapes sont validées. Je complète mon bilan, puis je génère ma trace.":"Cette partie s’ouvre quand les 4 étapes sont validées.";
+}
+function aller(i){ if(i<0||i>3) return; lireEtape(); etape=i; afficher(); sauver(); }
+function afficher(){
+  const s=ETAPES[etape];
+  $("badge").textContent=s.badge; $("titreEtape").textContent=s.titre; $("introEtape").textContent=s.intro;
+  $("aideTxt").classList.add("cache"); $("aideTxt").dataset.t=""; document.querySelectorAll(".aides .chip").forEach(b=>b.classList.remove("on"));
+  $("btnTrad").classList.toggle("cache",langue==="fr");
+  $("feedback").classList.add("cache");
+  $("btnPrec").disabled=etape===0; $("btnSuiv").disabled=etape===3;
+  $("corps").innerHTML=RENDUS[s.id]();
+  if(s.id==="expliquer") majCompte();
+  if(valides.has(etape)) feedback(true,"Étape déjà validée. Je peux encore modifier ma réponse.");
+  onglets();
+}
+function aide(t,btn){
+  const box=$("aideTxt"), s=ETAPES[etape];
+  document.querySelectorAll(".aides .chip").forEach(b=>b.classList.toggle("on",b===btn&&box.dataset.t!==t));
+  if(box.dataset.t===t){ box.classList.add("cache"); box.dataset.t=""; return; }
+  box.dir="ltr";
+  if(t==="objectif") box.innerHTML="<b>Mon objectif :</b> "+esc(s.objectif);
+  if(t==="methode") box.innerHTML="<b>Comment faire :</b> "+esc(s.methode)+'<div class="muted" style="font-size:.85rem;margin-top:4px">Essaie d’abord seul, puis utilise les aides si tu bloques.</div>';
+  if(t==="langue"){ box.textContent=TRAD[s.id][langue]||""; box.dir=RTL.has(langue)?"rtl":"ltr"; }
+  box.dataset.t=t; box.classList.remove("cache");
+}
+function changerLangue(l){ langue=l; try{localStorage.setItem("mavideo:langue",l);}catch(e){} if(V) afficher(); }
+
+const btnTemps=(id)=>`<button type="button" class="chrono" onclick="marquer('${id}')" title="Garder le moment de la vidéo">⏱</button>`;
+const lienMoment=t=>t==null||t===""?"":`<button type="button" class="moment" onclick="revoir(${t})" title="Revoir ce passage">▶ ${formatTemps(t)}</button>`;
+const RENDUS={
+ decouvrir(){ const r=R.decouvrir;
+  return `<div class="soft"><h3>1. Je regarde toute la vidéo</h3><p class="muted" style="margin:0 0 8px">Je regarde une fois du début à la fin, sans m’arrêter.</p>
+    <button class="btn btn-bleu btn-p" onclick="L.aller(0,true)">▶ Regarder depuis le début</button></div>
+   <div class="soft"><h3>2. C’est quel type de vidéo ?</h3><div class="row">${TYPES_VIDEO.map(t=>`<label class="chip ${r.type===t?"on":""}" style="cursor:pointer"><input type="radio" name="typeV" value="${esc(t)}" class="cache" ${r.type===t?"checked":""} onchange="document.querySelectorAll('[name=typeV]').forEach(x=>x.parentElement.classList.toggle('on',x.checked));sauver()">${esc(t)}</label>`).join("")}</div></div>
+   <div class="soft"><h3>3. De quoi parle la vidéo ?</h3>
+    <label class="f">Le thème, en quelques mots<input class="c" id="d_theme" value="${esc(r.theme||"")}" placeholder="La vidéo parle de…"></label>
+    <div class="grid2"><label class="f">Qui parle ou qui on voit ?<input class="c" id="d_qui" value="${esc(r.qui||"")}"></label><label class="f">Où ?<input class="c" id="d_ou" value="${esc(r.ou||"")}"></label></div>
+    <label class="f">Ce que j’ai compris en premier <small>(une phrase, même simple)</small><textarea class="c" id="d_phrase">${esc(r.phrase||"")}</textarea></label></div>`; },
+ reperer(){ const r=R.reperer;
+  return `<div class="soft"><h3>Je relève les informations <small class="muted">(au moins 4 lignes)</small></h3>
+   ${INFOS.map(([k,lab,ph])=>`<div class="ligne-info"><b>${lab}</b><input class="c" id="r_${k}" value="${esc((r[k]||{}).txt||"")}" placeholder="${ph}" style="margin:0">
+    <span class="row" style="gap:4px">${btnTemps("r_"+k)}<span id="r_${k}_t">${lienMoment((r[k]||{}).t)}</span></span></div>`).join("")}</div>
+   <div class="soft"><h3>L’information la plus importante, pour moi</h3><textarea class="c" id="r_importante" placeholder="Pour moi, l’information la plus importante est…">${esc(r.importante||"")}</textarea></div>`; },
+ retenir(){
+  return `<div class="soft"><h3>Mon lexique <small class="muted">(au moins 5 mots)</small></h3>
+   <div id="listeMots">${R.mots.map((m,i)=>ligneMot(m,i)).join("")}</div>
+   <button class="btn btn-bleu btn-p" style="margin-top:10px" onclick="ajouterMot()">+ Ajouter un mot</button></div>`; },
+ expliquer(){
+  return `<div class="grid2" style="margin-top:12px">
+    <div class="soft" style="margin:0"><h3>Des débuts de phrase</h3><p class="muted" style="margin:0;font-size:.88rem">Je clique pour l’ajouter à mon texte.</p>${AMORCES.map(a=>`<button class="amorce" onclick="inserer('\\n${esc(a.replace("…","")).replace(/'/g,"\\'")} ')">${esc(a)}</button>`).join("")}</div>
+    <div class="soft" style="margin:0"><h3>Mes mots</h3><p class="muted" style="margin:0;font-size:.88rem">Je clique sur un mot pour l’utiliser.</p>
+     <div class="row" style="margin-top:6px">${R.mots.filter(m=>m.mot).map(m=>`<button class="chip" onclick="inserer('${esc(m.mot).replace(/'/g,"\\'")} ')">${esc(m.mot)}</button>`).join("")||'<span class="muted">Ajoute des mots à l’étape 3.</span>'}</div>
+     ${R.reperer&&Object.keys(R.reperer).length?`<h3 style="margin-top:12px">Mes informations</h3><ul style="margin:0;padding-left:18px;font-size:.9rem">${INFOS.filter(([k])=>(R.reperer[k]||{}).txt).map(([k,lab])=>`<li><b>${lab}</b> ${esc(R.reperer[k].txt)}</li>`).join("")}</ul>`:""}</div></div>
+   <div class="soft"><h3>Mon explication</h3><textarea class="c" id="e_texte" style="min-height:170px" oninput="majCompte()" placeholder="Cette vidéo parle de…">${esc(R.texte||"")}</textarea>
+    <div class="row" style="justify-content:space-between;margin-top:6px"><span id="compte" class="compte"></span></div></div>`; }
+};
+function ligneMot(m,i){
+  return `<div class="mot" data-i="${i}">
+    <div><input class="c" data-m="mot" value="${esc(m.mot||"")}" placeholder="Le mot en français" style="margin:0;font-weight:800">
+      <select class="c" data-m="cat">${["",...CATEGORIES].map(c=>`<option ${m.cat===c?"selected":""} value="${esc(c)}">${c||"C’est…"}</option>`).join("")}</select></div>
+    <div><textarea class="c" data-m="sens" placeholder="Ce que ça veut dire (en français ou dans ma langue)" style="margin:0;min-height:72px" dir="auto">${esc(m.sens||"")}</textarea></div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+      <span class="row" style="gap:4px">${btnTemps("m"+i)}<span id="m${i}_t">${lienMoment(m.t)}</span></span>
+      <button class="btn btn-blanc btn-p" onclick="traduire(${i})">Traduire ↗</button>
+      <button class="btn btn-blanc btn-p" style="color:#b91c1c" onclick="supprimerMot(${i})">Supprimer</button></div></div>`;
+}
+
+/* ================= Lecture/écriture des réponses ================= */
+function lireEtape(){
+  const id=ETAPES[etape].id, v=x=>{const e=$(x);return e?e.value:undefined;};
+  if(id==="decouvrir"){ if(!$("d_theme")) return; const c=document.querySelector("[name=typeV]:checked");
+    Object.assign(R.decouvrir,{type:c?c.value:R.decouvrir.type,theme:v("d_theme"),qui:v("d_qui"),ou:v("d_ou"),phrase:v("d_phrase")}); }
+  if(id==="reperer"){ if(!$("r_qui")) return; INFOS.forEach(([k])=>{ R.reperer[k]=Object.assign(R.reperer[k]||{},{txt:v("r_"+k)}); }); R.reperer.importante=v("r_importante"); }
+  if(id==="retenir") document.querySelectorAll("#listeMots .mot").forEach(el=>{ const m=R.mots[+el.dataset.i]; el.querySelectorAll("[data-m]").forEach(f=>m[f.dataset.m]=f.value); });
+  if(id==="expliquer"&&$("e_texte")) R.texte=$("e_texte").value;
+}
+document.addEventListener("input",e=>{ if(e.target.closest("#corps")) { clearTimeout(window._s); window._s=setTimeout(sauver,400); } });
+function marquer(id){
+  const t=Math.round(L.temps()*10)/10;
+  if(id.startsWith("r_")){ const k=id.slice(2); lireEtape(); R.reperer[k]=Object.assign(R.reperer[k]||{},{t}); $(id+"_t").innerHTML=lienMoment(t); }
+  else { const i=+id.slice(1); lireEtape(); R.mots[i].t=t; $("m"+i+"_t").innerHTML=lienMoment(t); }
+  sauver();
+}
+function revoir(t){ L.aller(Math.max(0,t-3),true); }
+function reculer(){ L.aller(Math.max(0,L.temps()-5),true); }
+function ajouterMot(){ lireEtape(); R.mots.push({mot:"",sens:"",cat:"",t:Math.round(L.temps()*10)/10}); afficher(); const all=document.querySelectorAll('#listeMots [data-m="mot"]'); all[all.length-1].focus(); sauver(); }
+function supprimerMot(i){ lireEtape(); R.mots.splice(i,1); afficher(); sauver(); }
+function traduire(i){ lireEtape(); const m=R.mots[i]; if(!m.mot) return feedback(false,"Écris d’abord le mot."); const tl=langue==="fr"?"en":langue;
+  window.open(`https://translate.google.com/?sl=fr&tl=${tl}&text=${encodeURIComponent(m.mot)}&op=translate`,"_blank","noopener"); }
+function inserer(txt){ const ta=$("e_texte"); const d=ta.selectionStart??ta.value.length; let v=ta.value; if(txt.startsWith("\n")&&(d===0||v.trim()==="")) txt=txt.slice(1);
+  ta.value=v.slice(0,d)+txt+v.slice(ta.selectionEnd??d); ta.focus(); ta.selectionStart=ta.selectionEnd=d+txt.length; majCompte(); sauver(); }
+function motsUtilises(){ const t=" "+norm(R.texte||($("e_texte")||{}).value||"")+" "; return R.mots.filter(m=>m.mot&&t.includes(norm(m.mot.trim()))); }
+function nbPhrases(s){ return String(s||"").split(/[.!?\n]+/).filter(p=>nbMots(p)>=3).length; }
+function majCompte(){ if(!$("e_texte")) return; R.texte=$("e_texte").value;
+  const n=nbMots(R.texte), p=nbPhrases(R.texte), u=motsUtilises().length;
+  $("compte").innerHTML=`<span class="${p>=3?"compte ok":""}">${p>=3?"✔":"•"} ${p} phrase(s) sur 3</span> · <span class="${u>=2?"compte ok":""}">${u>=2?"✔":"•"} ${u} mot(s) de mon lexique sur 2</span> · <span class="${n>=25?"compte ok":""}">${n>=25?"✔":"•"} ${n} mots sur 25</span>`; }
+
+/* ================= Vérification ================= */
+function feedback(ok,m){ const f=$("feedback"); f.className="feedback "+(ok?"ok":"ko"); f.textContent=m; }
+function valider(){
+  lireEtape(); const id=ETAPES[etape].id; let ok=false, msg="";
+  if(id==="decouvrir"){ const r=R.decouvrir; const manque=[!r.type&&"le type de vidéo",!r.theme&&"le thème",nbMots(r.phrase)<4&&"une phrase (au moins 4 mots)"].filter(Boolean);
+    ok=!manque.length; msg=ok?"Bravo : tu as compris l’idée générale de la vidéo.":"Il manque encore : "+manque.join(", ")+"."; }
+  if(id==="reperer"){ const n=INFOS.filter(([k])=>nbMots((R.reperer[k]||{}).txt)>=1).length, tps=INFOS.filter(([k])=>(R.reperer[k]||{}).t!=null).length;
+    ok=n>=4; msg=ok?`Bravo : tu as relevé ${n} informations${tps?` et gardé ${tps} moment(s) de la vidéo`:""}.`:`Tu as relevé ${n} information(s). Il en faut au moins 4. Regarde à nouveau la vidéo et mets-la en pause.`; }
+  if(id==="retenir"){ const complets=R.mots.filter(m=>m.mot&&m.sens).length;
+    ok=complets>=5; msg=ok?`Bravo : ton lexique contient ${complets} mots avec leur sens.`:`Tu as ${complets} mot(s) avec leur sens. Il en faut au moins 5 : pour chaque mot, écris aussi ce qu’il veut dire.`; }
+  if(id==="expliquer"){ const p=nbPhrases(R.texte), u=motsUtilises().length, n=nbMots(R.texte);
+    ok=p>=3&&u>=2&&n>=25; msg=ok?"Bravo : ton explication est complète. Tu peux maintenant faire ta trace de travail.":"Ton texte doit avoir au moins 3 phrases, 25 mots et utiliser 2 mots de ton lexique. Regarde le compteur sous ton texte."; }
+  if(ok) valides.add(etape); else valides.delete(etape);
+  feedback(ok,msg+(ok&&etape<3?" Tu peux passer à l’étape suivante.":"")); onglets(); sauver();
+  if(ok&&valides.size===4){ genererTrace(); setTimeout(()=>$("trace").scrollIntoView({behavior:"smooth"}),600); }
+}
+
+/* ================= Trace ================= */
+function rendreAutoeval(){
+  $("autoeval").innerHTML=OBJECTIFS.map((o,i)=>`<div style="margin-bottom:10px"><b>${esc(o)}</b><div class="niveaux">${["À retravailler","En cours","Réussi"].map(n=>
+    `<label><input type="radio" name="ae${i}" value="${n}" ${R.auto["ae"+i]===n?"checked":""} onchange="sauver()"><span>${n}</span></label>`).join("")}</div></div>`).join("");
+}
+function genererTrace(){
+  lireEtape(); const d=R.decouvrir, r=R.reperer;
+  const L1=[`${V.titre||"Ma vidéo"}${V.matiere?" – "+V.matiere:""}`, V.local?`Vidéo : ${V.nom}`:`Vidéo : ${V.src}`, "",
+    "1. Je découvre", `C’est ${d.type||"…"}. La vidéo parle de : ${d.theme||"…"}.`, d.qui?`On voit / on entend : ${d.qui}.`:"", d.ou?`Lieu : ${d.ou}.`:"", d.phrase?`Ce que j’ai compris en premier : ${d.phrase}`:"", "",
+    "2. Je repère", ...INFOS.filter(([k])=>(r[k]||{}).txt).map(([k,lab])=>`${lab} ${r[k].txt}${r[k].t!=null?" ("+formatTemps(r[k].t)+")":""}`), r.importante?`Le plus important : ${r.importante}`:"", "",
+    "3. Je retiens – mon lexique", ...R.mots.filter(m=>m.mot).map(m=>`• ${m.mot}${m.cat?" ("+m.cat+")":""} : ${m.sens||"…"}`), "",
+    "4. J’explique", R.texte||"…", "",
+    "Mon bilan", `Ce que j’ai bien compris : ${$("bilan1").value||"…"}`, `Ce que je dois encore travailler : ${$("bilan2").value||"…"}`, `Les aides utiles : ${$("bilan3").value||"…"}`, "",
+    "Je m’évalue", ...OBJECTIFS.map((o,i)=>{const c=document.querySelector(`input[name=ae${i}]:checked`);return `– ${o} → ${c?c.value:"non renseigné"}`;})];
+  $("traceFinale").textContent=L1.filter((x,i,a)=>!(x===""&&a[i-1]==="")).join("\n").replace(/\n{3,}/g,"\n\n"); sauver();
+}
+function copierTrace(){ genererTrace(); navigator.clipboard&&navigator.clipboard.writeText($("traceFinale").textContent).then(()=>feedbackTrace("Trace copiée."),()=>{}); }
+function telecharger(){ genererTrace(); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([$("traceFinale").textContent],{type:"text/plain;charset=utf-8"})); a.download="ma-trace-"+(V.titre||"video").replace(/[^\w-]+/g,"-")+".txt"; a.click(); }
+function feedbackTrace(m){ const t=$("traceInfo"); const old=t.textContent; t.textContent="✔ "+m; setTimeout(()=>t.textContent=old,2500); }
+
+/* ================= Démarrage ================= */
+(function(){
+  try{ langue=localStorage.getItem("mavideo:langue")||"fr"; }catch(e){}
+  $("maLangue").innerHTML=Object.entries(LANGUES).map(([k,n])=>`<option value="${k}" ${k===langue?"selected":""}>${n}</option>`).join("");
+  const q=new URLSearchParams(location.search), v=q.get("video");
+  if(v){ $("titreVideo").value=q.get("titre")||""; if(idYouTube(v)) $("lienYT").value=v; else $("lienMP4").value=v;
+    V={src:v,nom:v.split("/").pop(),local:false,titre:q.get("titre")||"",matiere:q.get("matiere")||""}; ouvrirTravail(); }
+  else listerReprises();
+})();
+window.addEventListener("beforeunload",()=>{ if(V) sauver(); });
+</script>
+</body>
+</html>

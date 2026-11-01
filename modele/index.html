@@ -588,7 +588,7 @@ function accueil(titre, txt){
   }
   if(window.CONTENU) return demarrer(window.CONTENU);       // contenu intégré directement dans la page
   const nom=q.get("parcours");
-  if(!nom) return accueil();
+  if(!nom) return location.replace("ma-video.html");   // pas de parcours préparé : appli élève générique
   if(!/^[\w-]+$/.test(nom)) return accueil("Nom de parcours invalide");
   const s=document.createElement("script"); s.src="parcours/"+nom+".js";
   s.onload=()=> window.CONTENU ? demarrer(window.CONTENU) : accueil("Parcours vide");

@@ -35,7 +35,8 @@
         duree:()=> pret ? p.getDuration() : 0,
         aller:(t,jouer)=>quand(()=>{ p.seekTo(t,true); if(jouer) p.playVideo(); }),
         lire:()=>quand(()=>p.playVideo()),
-        pause:()=>quand(()=>p.pauseVideo())
+        pause:()=>quand(()=>p.pauseVideo()),
+        vitesse:r=>quand(()=>p.setPlaybackRate(r))
       };
     }
     const v=document.createElement("video");
@@ -47,7 +48,8 @@
       type:"fichier", element:v,
       temps:()=>v.currentTime, duree:()=>v.duration||0,
       aller:(t,jouer)=>{ try{v.currentTime=t;}catch(e){} if(jouer) v.play().catch(()=>{}); },
-      lire:()=>v.play().catch(()=>{}), pause:()=>v.pause()
+      lire:()=>v.play().catch(()=>{}), pause:()=>v.pause(),
+      vitesse:r=>{ v.playbackRate=r; }
     };
   };
   window.formatTemps = s => { s=Math.max(0,Math.round(+s||0)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };

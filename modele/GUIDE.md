@@ -2,25 +2,29 @@
 
 Cet outil sert à créer, **sans écrire de code**, un parcours élève guidé autour de **n'importe quelle vidéo** : YouTube, ou fichier MP4. Chaque parcours comprend des étapes avec passage utile, des aides à la demande, des sous-titres et des consignes traduites, un lexique, une trace finale et une autoévaluation.
 
-## Les deux pages
+## Trois façons de l’utiliser
 
 | Page | Pour qui | Adresse |
 |---|---|---|
-| **`editeur.html`** | l'enseignant | `…/modele/editeur.html` |
-| **`index.html`** | les élèves | `…/modele/?parcours=nom-du-parcours` |
+| **`ma-video.html`** | l’élève, avec **n’importe quelle vidéo** | `…/modele/` |
+| **`editeur.html`** | l’enseignant, pour préparer un parcours précis | `…/modele/editeur.html` |
+| **`index.html?parcours=…`** | l’élève, sur un parcours préparé | `…/modele/?parcours=amazonie` |
 
-Un seul lecteur sert à tous les parcours. Chaque parcours est un petit fichier rangé dans `parcours/` :
+### 1. L’élève choisit sa vidéo (aucune préparation)
+L’élève colle un lien YouTube, un lien vers une vidéo MP4, ou choisit un fichier sur son ordinateur. L’appli le guide ensuite avec la même démarche, quelle que soit la vidéo :
+1. **Je découvre** : type de vidéo, thème, qui, où, première phrase de compréhension.
+2. **Je repère** : qui, quoi, où, quand, combien, pourquoi. Le bouton ⏱ garde le moment de la vidéo pour pouvoir le revoir.
+3. **Je retiens** : son propre lexique (au moins 5 mots, avec leur sens, leur catégorie, le moment de la vidéo et un lien de traduction).
+4. **J’explique** : un texte d’au moins 3 phrases, construit avec des débuts de phrase et ses mots.
 
-```
-modele/
-  index.html          ← lecteur élève (ne pas modifier)
-  editeur.html        ← éditeur enseignant (ne pas modifier)
-  lecteur-video.js    ← (ne pas modifier)
-  parcours/
-    amazonie.js       ← un parcours = un fichier
-    volcans.js
-  videos/             ← seulement si la vidéo est un fichier MP4 (pas pour YouTube)
-```
+Viennent ensuite le bilan, l’autoévaluation et la trace (copier, imprimer, télécharger). Les aides sont proposées à la demande : objectif, méthode, consigne traduite dans 10 langues, vitesse lente, retour de 5 secondes, sous-titres YouTube (bouton CC). Rien n’est envoyé sur internet, et le travail est gardé dans le navigateur.
+
+**Astuce :** pour imposer une vidéo à la classe, donnez un lien de la forme
+`…/modele/ma-video.html?video=LIEN_YOUTUBE&titre=Les volcans`
+L’élève arrive directement sur la vidéo.
+
+### 2. L’enseignant prépare un parcours précis (facultatif)
+Il ajoute des questions propres à la vidéo, des réponses vérifiées, des sous-titres traduits et un lexique fourni. La suite de ce guide explique comment faire.
 
 ## Créer un parcours
 
