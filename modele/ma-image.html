@@ -99,6 +99,12 @@ label.f small{font-weight:500;color:var(--gris)}
 .reprise{border:1px solid var(--bord);background:#fff;border-radius:14px;padding:8px;width:150px;text-align:left;display:flex;flex-direction:column;gap:2px}
 .reprise img{width:100%;height:80px;object-fit:cover;border-radius:8px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.85);display:flex;align-items:center;justify-content:center;z-index:50}
+.trad{background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:10px 12px;margin-top:12px;font-weight:600}
+.niveauxChoix{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.niveauxChoix{grid-template-columns:1fr}}
+.niv{border:2px solid var(--bord);background:#fff;border-radius:14px;padding:12px;text-align:left}
+.niv b{display:block;font-size:1.4rem;color:var(--bleu)}.niv span{font-size:.88rem;color:var(--gris)}
+.niv.on{border-color:var(--bleu);background:var(--bleu-c)}
 @media print{body *{visibility:hidden}#zoneImpression,#zoneImpression *{visibility:visible}#zoneImpression{position:absolute;left:0;top:0;width:100%}}
 </style>
 </head>
@@ -109,7 +115,7 @@ label.f small{font-weight:500;color:var(--gris)}
     <h1 id="titrePage">Je comprends une image</h1>
     <p>Je choisis une image : une photo, une carte, une affiche, un dessin, un tableau, un graphique… L’appli m’aide à la comprendre en 4 étapes : je découvre, je décris, je retiens, j’explique.</p>
     <div class="row" style="margin-top:14px">
-      <label style="font-weight:700;font-size:.9rem">Aide dans ma langue :
+      <label style="font-weight:700;font-size:.9rem">Ma langue :
         <select id="maLangue" class="c" style="width:auto;display:inline-block;margin-left:6px;padding:5px 8px" onchange="changerLangue(this.value)"></select></label>
       <button class="btn btn-clair btn-p cache" id="btnAutre" onclick="autreImage()">Changer d’image</button>
       <a class="btn btn-clair btn-p" href="ma-texte.html" style="text-decoration:none">Travailler sur un texte</a>
@@ -122,7 +128,8 @@ label.f small{font-weight:500;color:var(--gris)}
 <main class="wrap" id="ecranChoix">
   <div class="choix carte">
     <div class="label">Étape 0</div>
-    <h2>Je choisis mon image</h2>
+    <h2>Je choisis mon image et mon niveau</h2>
+    <div id="tradChoix" class="trad cache"></div>
     <p class="muted">Mon image peut venir de mon ordinateur, de mon téléphone (photo du manuel) ou d’internet.</p>
     <div class="source">
       <div><h3>💻 Un fichier ou une photo</h3><label class="btn btn-bleu btn-p" style="cursor:pointer;margin-top:4px">Choisir l’image<input type="file" accept="image/*" class="cache" id="fichier" onchange="choisirFichier(this.files[0])"></label>
@@ -135,6 +142,8 @@ label.f small{font-weight:500;color:var(--gris)}
       <label class="f">Le titre du document <small>(si je le connais)</small><input class="c" id="titreImg" placeholder="Ex. : Une rue de Lagos"></label>
       <label class="f">La matière <small>(facultatif)</small><input class="c" id="matiere" placeholder="Ex. : Géographie, Histoire, Arts…"></label>
     </div>
+    <h3 style="margin-top:16px">Mon niveau en français</h3>
+    <div class="niveauxChoix" id="niveauxChoix"></div>
     <div class="row" style="margin-top:16px"><button class="btn btn-bleu" onclick="commencer()">Commencer →</button></div>
     <div id="erreurChoix" class="feedback ko cache"></div>
     <div id="reprises"></div>
@@ -239,10 +248,17 @@ const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u03
 const nbMots=s=>String(s||"").trim().split(/\s+/).filter(Boolean).length;
 
 /* ================= Langues ================= */
-const LANGUES={fr:"Français",en:"English",es:"Español",pt:"Português",ar:"العربية",tr:"Türkçe",uk:"Українська",ru:"Русский",ro:"Română",sq:"Shqip",it:"Italiano"};
+const LANGUES={fr:"Français",ar:"العربية",tr:"Türkçe",uk:"Українська",sq:"Shqip",ka:"ქართული"};
 const RTL=new Set(["ar"]);
 const TRAD={
+ choix:{
+  ar:"اختر صورة: ملفًا، أو صورة تلتقطها بالهاتف، أو رابطًا. اختر مستواك في الفرنسية: A1 (مبتدئ)، A2، أو B1. ثم اضغط على «Commencer».",
+  tr:"Bir resim seç: bir dosya, telefonla çekilmiş bir fotoğraf ya da bir bağlantı. Fransızca seviyeni seç: A1 (başlangıç), A2 veya B1. Sonra « Commencer » düğmesine tıkla.",
+  uk:"Вибери зображення: файл, фото з телефона або посилання. Вибери свій рівень французької: A1 (початковий), A2 або B1. Потім натисни « Commencer ».",
+  sq:"Zgjidh një imazh: një skedar, një foto me telefon ose një lidhje. Zgjidh nivelin tënd në frëngjisht: A1 (fillestar), A2 ose B1. Pastaj kliko « Commencer ».",
+  ka:"აირჩიე სურათი: ფაილი, ტელეფონით გადაღებული ფოტო ან ბმული. აირჩიე შენი ფრანგულის დონე: A1 (დამწყები), A2 ან B1. შემდეგ დააჭირე « Commencer »-ს."},
  decouvrir:{
+  ka:"ერთი წუთის განმავლობაში დააკვირდი მთელ სურათს. თქვი, როგორი დოკუმენტია (ფოტო, რუკა, პლაკატი…), იპოვე სათაური, ავტორი, თარიღი და წყარო და თქვი, რაზეა.",
   en:"Look at the whole image for one minute. Say what kind of document it is (photo, map, poster…), find its title, author, date and source, and say what it is about.",
   es:"Mira toda la imagen durante un minuto. Di qué tipo de documento es (foto, mapa, cartel…), busca el título, el autor, la fecha y la fuente, y di de qué trata.",
   pt:"Olha para a imagem inteira durante um minuto. Diz que tipo de documento é (foto, mapa, cartaz…), procura o título, o autor, a data e a fonte, e diz de que fala.",
@@ -254,37 +270,40 @@ const TRAD={
   sq:"Shiko të gjithë imazhin për një minutë. Thuaj çfarë lloj dokumenti është (foto, hartë, poster…), gjej titullin, autorin, datën dhe burimin, dhe thuaj për çfarë flet.",
   it:"Guarda tutta l’immagine per un minuto. Di’ che tipo di documento è (foto, carta, manifesto…), trova il titolo, l’autore, la data e la fonte, e di’ di cosa parla."},
  decrire:{
+  ka:"აღწერე, რას ხედავ. დააჭირე სურათს, რომ თითოეულ მნიშვნელოვან ელემენტზე დანომრილი ნიშანი დასვა, შემდეგ დაწერე, რა არის და სად არის (ზემოთ, მარცხნივ…).",
   en:"Describe what you see. Click on the image to put a numbered marker on each important element, then write what it is and where it is (at the top, on the left…). At least 4 markers.",
   es:"Describe lo que ves. Haz clic en la imagen para poner una marca numerada en cada elemento importante y escribe qué es y dónde está (arriba, a la izquierda…). Al menos 4 marcas.",
   pt:"Descreve o que vês. Clica na imagem para pôr uma marca numerada em cada elemento importante e escreve o que é e onde está (em cima, à esquerda…). Pelo menos 4 marcas.",
-  ar:"صِف ما تراه. اضغط على الصورة لوضع علامة مرقّمة على كل عنصر مهم، ثم اكتب ما هو وأين يوجد (في الأعلى، على اليسار…). 4 علامات على الأقل.",
-  tr:"Gördüğünü anlat. Her önemli öğeye numaralı bir işaret koymak için resme tıkla, sonra ne olduğunu ve nerede olduğunu yaz (yukarıda, solda…). En az 4 işaret.",
-  uk:"Опиши, що ти бачиш. Натисни на зображення, щоб поставити пронумеровану позначку на кожному важливому елементі, і напиши, що це і де воно (угорі, ліворуч…). Щонайменше 4 позначки.",
+  ar:"صِف ما تراه. اضغط على الصورة لوضع علامة مرقّمة على كل عنصر مهم، ثم اكتب ما هو وأين يوجد (في الأعلى، على اليسار…).",
+  tr:"Gördüğünü anlat. Her önemli öğeye numaralı bir işaret koymak için resme tıkla, sonra ne olduğunu ve nerede olduğunu yaz (yukarıda, solda…).",
+  uk:"Опиши, що ти бачиш. Натисни на зображення, щоб поставити пронумеровану позначку на кожному важливому елементі, і напиши, що це і де воно (угорі, ліворуч…).",
   ru:"Опиши, что ты видишь. Нажми на изображение, чтобы поставить пронумерованную метку на каждый важный элемент, и напиши, что это и где оно (вверху, слева…). Не меньше 4 меток.",
   ro:"Descrie ce vezi. Apasă pe imagine ca să pui un reper numerotat pe fiecare element important, apoi scrie ce este și unde se află (sus, în stânga…). Cel puțin 4 repere.",
-  sq:"Përshkruaj çfarë sheh. Kliko mbi imazh për të vënë një shenjë me numër mbi çdo element të rëndësishëm, pastaj shkruaj çfarë është dhe ku ndodhet (lart, majtas…). Të paktën 4 shenja.",
+  sq:"Përshkruaj çfarë sheh. Kliko mbi imazh për të vënë një shenjë me numër mbi çdo element të rëndësishëm, pastaj shkruaj çfarë është dhe ku ndodhet (lart, majtas…).",
   it:"Descrivi quello che vedi. Clicca sull’immagine per mettere un segno numerato su ogni elemento importante, poi scrivi che cos’è e dove si trova (in alto, a sinistra…). Almeno 4 segni."},
  retenir:{
+  ka:"აირჩიე სასარგებლო სიტყვები ამ სურათზე სალაპარაკოდ. თითოეული სიტყვისთვის დაწერე მნიშვნელობა ფრანგულად ან შენს ენაზე. შეგიძლია დააკავშირო სურათზე დასმულ ნიშანთან.",
   en:"Choose at least 5 useful words to talk about this image. For each word, write what it means (in French or in your language). You can link it to a marker on the image.",
   es:"Elige al menos 5 palabras útiles para hablar de esta imagen. Para cada palabra, escribe qué significa (en francés o en tu idioma). Puedes unirla a una marca de la imagen.",
   pt:"Escolhe pelo menos 5 palavras úteis para falar desta imagem. Para cada palavra, escreve o que significa (em francês ou na tua língua). Podes ligá-la a uma marca da imagem.",
-  ar:"اختر 5 كلمات مفيدة على الأقل للحديث عن هذه الصورة. لكل كلمة، اكتب معناها (بالفرنسية أو بلغتك). يمكنك ربطها بعلامة على الصورة.",
-  tr:"Bu resim hakkında konuşmak için en az 5 yararlı kelime seç. Her kelime için anlamını yaz (Fransızca ya da kendi dilinde). Kelimeyi resimdeki bir işaretle bağlayabilirsin.",
-  uk:"Вибери щонайменше 5 корисних слів, щоб говорити про це зображення. Для кожного слова напиши, що воно означає (французькою або своєю мовою). Можеш пов’язати його з позначкою на зображенні.",
+  ar:"اختر كلمات مفيدة للحديث عن هذه الصورة. لكل كلمة، اكتب معناها (بالفرنسية أو بلغتك). يمكنك ربطها بعلامة على الصورة.",
+  tr:"Bu resim hakkında konuşmak için yararlı kelimeler seç. Her kelime için anlamını yaz (Fransızca ya da kendi dilinde). Kelimeyi resimdeki bir işaretle bağlayabilirsin.",
+  uk:"Вибери корисні слова, щоб говорити про це зображення. Для кожного слова напиши, що воно означає (французькою або своєю мовою). Можеш пов’язати його з позначкою на зображенні.",
   ru:"Выбери не меньше 5 полезных слов, чтобы говорить об этом изображении. Для каждого слова напиши, что оно значит (по-французски или на своём языке). Можно связать его с меткой на изображении.",
   ro:"Alege cel puțin 5 cuvinte utile pentru a vorbi despre această imagine. Pentru fiecare cuvânt, scrie ce înseamnă (în franceză sau în limba ta). Îl poți lega de un reper de pe imagine.",
-  sq:"Zgjidh të paktën 5 fjalë të dobishme për të folur për këtë imazh. Për çdo fjalë, shkruaj çfarë do të thotë (në frëngjisht ose në gjuhën tënde). Mund ta lidhësh me një shenjë në imazh.",
+  sq:"Zgjidh fjalë të dobishme për të folur për këtë imazh. Për çdo fjalë, shkruaj çfarë do të thotë (në frëngjisht ose në gjuhën tënde). Mund ta lidhësh me një shenjë në imazh.",
   it:"Scegli almeno 5 parole utili per parlare di questa immagine. Per ogni parola, scrivi cosa significa (in francese o nella tua lingua). Puoi collegarla a un segno sull’immagine."},
  expliquer:{
+  ka:"ახსენი სურათი ფრანგულად: რას აჩვენებს, რას ნიშნავს და რატომ შექმნა ავტორმა. დააჭირე წინადადების დასაწყისს და დაასრულე. გამოიყენე სიტყვები შენი სიიდან.",
   en:"Explain the image in French with at least 3 sentences: what it shows, what it means, and why the author made it. Click a sentence starter, then complete it. Use at least 2 words from your list.",
   es:"Explica la imagen en francés con al menos 3 frases: qué muestra, qué significa y por qué el autor la hizo. Haz clic en un inicio de frase y complétalo. Usa al menos 2 palabras de tu lista.",
   pt:"Explica a imagem em francês com pelo menos 3 frases: o que mostra, o que significa e porque o autor a fez. Clica num início de frase e completa-o. Usa pelo menos 2 palavras da tua lista.",
-  ar:"اشرح الصورة بالفرنسية في 3 جمل على الأقل: ماذا تُظهر، وماذا تعني، ولماذا صنعها المؤلف. اضغط على بداية جملة ثم أكملها. استعمل كلمتين على الأقل من قائمتك.",
-  tr:"Resmi Fransızca en az 3 cümleyle açıkla: ne gösteriyor, ne anlama geliyor ve yazar onu neden yaptı. Bir cümle başlangıcına tıkla ve tamamla. Listenden en az 2 kelime kullan.",
-  uk:"Поясни зображення французькою щонайменше трьома реченнями: що воно показує, що означає і чому автор його створив. Натисни на початок речення й доповни його. Використай щонайменше 2 слова зі свого списку.",
+  ar:"اشرح الصورة بالفرنسية: ماذا تُظهر، وماذا تعني، ولماذا صنعها المؤلف. اضغط على بداية جملة ثم أكملها. استعمل كلمات من قائمتك.",
+  tr:"Resmi Fransızca açıkla: ne gösteriyor, ne anlama geliyor ve yazar onu neden yaptı. Bir cümle başlangıcına tıkla ve tamamla. Listendeki kelimeleri kullan.",
+  uk:"Поясни зображення французькою: що воно показує, що означає і чому автор його створив. Натисни на початок речення й доповни його. Використовуй слова зі свого списку.",
   ru:"Объясни изображение по-французски не меньше чем в 3 предложениях: что оно показывает, что означает и зачем автор его создал. Нажми на начало предложения и закончи его. Используй не меньше 2 слов из списка.",
   ro:"Explică imaginea în franceză în cel puțin 3 propoziții: ce arată, ce înseamnă și de ce a făcut-o autorul. Apasă pe un început de propoziție și completează-l. Folosește cel puțin 2 cuvinte din lista ta.",
-  sq:"Shpjego imazhin në frëngjisht me të paktën 3 fjali: çfarë tregon, çfarë do të thotë dhe pse e bëri autori. Kliko mbi një fillim fjalie dhe plotësoje. Përdor të paktën 2 fjalë nga lista jote.",
+  sq:"Shpjego imazhin në frëngjisht: çfarë tregon, çfarë do të thotë dhe pse e bëri autori. Kliko mbi një fillim fjalie dhe plotësoje. Përdor fjalë nga lista jote.",
   it:"Spiega l’immagine in francese con almeno 3 frasi: cosa mostra, cosa significa e perché l’autore l’ha fatta. Clicca su un inizio di frase e completalo. Usa almeno 2 parole della tua lista."}
 };
 
@@ -292,6 +311,24 @@ const TRAD={
 const NATURES=["une photographie","une carte","un tableau / une peinture","une affiche","un dessin de presse","un graphique","un schéma","une bande dessinée","une page de manuel","autre"];
 const POSITIONS=["au premier plan","au second plan","à l’arrière-plan","en haut","en bas","à gauche","à droite","au centre","en haut à gauche","en haut à droite","en bas à gauche","en bas à droite"];
 const CATEGORIES=["une personne / un acteur","un lieu / un paysage","un objet","une action","une couleur / une forme","un texte / une légende","une notion","autre"];
+const NIVEAUX={
+ A1:{nom:"A1",desc:"Je commence à apprendre le français.",pres:1,phrase:false,reperes:3,mots:4,phrases:2,longueur:12,motsLex:1,connecteur:false},
+ A2:{nom:"A2",desc:"Je comprends des phrases simples.",pres:2,phrase:true,reperes:4,mots:5,phrases:3,longueur:25,motsLex:2,connecteur:false},
+ B1:{nom:"B1",desc:"Je comprends l’essentiel d’un document.",pres:3,phrase:true,reperes:5,mots:6,phrases:4,longueur:45,motsLex:3,connecteur:true}
+};
+const CONNECTEURS=["parce que","car","donc","alors","mais","cependant","pourtant","d’abord","ensuite","enfin","à cause de","c’est pourquoi","par exemple"];
+const AMORCES_NIV={
+ A1:["C’est…","Je vois…","Il y a…","En haut / En bas, il y a…"],
+ A2:["Ce document est…","Il montre…","Au premier plan, on voit…","À l’arrière-plan, on voit…","Je pense que…"],
+ B1:["Ce document est… Il a été réalisé par… en…","Il montre…","Au premier plan,… À l’arrière-plan,…","Cela signifie que…","L’auteur veut montrer que…","Ce document est intéressant parce que…","Cependant,…"]
+};
+const N=()=>NIVEAUX[IMG.niveau||"A2"];
+let niveauChoisi="A2";
+function rendreNiveaux(){ $("niveauxChoix").innerHTML=Object.values(NIVEAUX).map(n=>`<button class="niv ${n.nom===niveauChoisi?"on":""}" onclick="niveauChoisi='${n.nom}';rendreNiveaux()"><b>${n.nom}</b><span>${n.desc}</span></button>`).join(""); }
+function majTradChoix(){ const b=$("tradChoix"); if(langue==="fr"){ b.classList.add("cache"); return; } b.textContent=TRAD.choix[langue]; b.dir=RTL.has(langue)?"rtl":"ltr"; b.classList.remove("cache"); }
+function exigences(){ const n=N(), id=ETAPES[etape].id;
+  return {decouvrir:`le type de document, ${n.pres} information(s) de présentation, le sujet${n.phrase?" et une phrase":""}.`,decrire:`au moins ${n.reperes} repères décrits.`,
+    retenir:`au moins ${n.mots} mots avec leur sens.`,expliquer:`au moins ${n.phrases} phrases, ${n.longueur} mots, ${n.motsLex} mot(s) de mon lexique${n.connecteur?" et un mot de liaison (parce que, donc, mais…)":""}.`}[id]; }
 const AMORCES=["Ce document est…","Il a été réalisé par… en…","Il montre…","Au premier plan, on voit…","À l’arrière-plan, on voit…","Cela signifie que…","L’auteur veut montrer que…","Ce document est intéressant parce que…"];
 const ETAPES=[
  {id:"decouvrir",badge:"Je découvre",court:"Le document",titre:"Étape 1 – Je découvre le document",intro:"J’observe toute l’image pendant une minute. Je cherche ce que c’est et d’où il vient.",
@@ -317,7 +354,7 @@ function sauver(){
   if(!IMG) return; lireEtape();
   R.notes=$("notes").value; R.bilan=[1,2,3].map(i=>$("bilan"+i).value);
   document.querySelectorAll("#autoeval input:checked").forEach(r=>R.auto[r.name]=r.value);
-  try{ localStorage.setItem(cle(),JSON.stringify({IMG,etape,valides:[...valides],R,date:Date.now()})); localStorage.setItem("mavideo:langue",langue); }
+  try{ localStorage.setItem(cle(),JSON.stringify({IMG,etape,valides:[...valides],R,date:Date.now()})); localStorage.setItem("montexte:langue",langue); }
   catch(e){ /* image trop lourde pour être gardée : on garde au moins le travail */ try{ localStorage.setItem(cle(),JSON.stringify({IMG:{...IMG,src:IMG.lien||""},etape,valides:[...valides],R,date:Date.now()})); }catch(e2){} }
 }
 function charger(){ try{ const d=JSON.parse(localStorage.getItem(cle())||"null"); if(!d) return false; etape=d.etape||0; valides=new Set(d.valides||[]); R=Object.assign(freshR(),d.R||{}); return true; }catch(e){ return false; } }
@@ -336,8 +373,8 @@ function commencer(){
   const lien=$("lienImg").value.trim();
   if(lien){ if(!/^https?:\/\//.test(lien)) return erreur("Le lien doit commencer par http:// ou https://"); choisie={src:lien,nom:lien.split("/").pop().split("?")[0],lien}; }
   if(!choisie) return erreur("Choisis d’abord une image : un fichier, un lien ou une image copiée.");
-  IMG={src:choisie.src,lien:choisie.lien||"",nom:choisie.nom,titre:$("titreImg").value.trim(),matiere:$("matiere").value.trim()};
-  IMG.id=choisie.lien?hash(choisie.lien):hash(choisie.src);
+  IMG={src:choisie.src,lien:choisie.lien||"",nom:choisie.nom,titre:$("titreImg").value.trim(),matiere:$("matiere").value.trim(),niveau:niveauChoisi};
+  IMG.id=(choisie.lien?hash(choisie.lien):hash(choisie.src))+niveauChoisi;
   ouvrirTravail();
 }
 function erreur(m){ const e=$("erreurChoix"); e.textContent=m; e.classList.remove("cache"); }
@@ -345,7 +382,7 @@ function ouvrirTravail(){
   etape=0; valides=new Set(); R=freshR(); const repris=charger();
   $("ecranChoix").classList.add("cache"); $("ecranTravail").classList.remove("cache"); $("btnAutre").classList.remove("cache");
   $("titrePage").textContent=IMG.titre||"Je comprends une image";
-  $("kicker").textContent=IMG.matiere?IMG.matiere+" – je travaille avec une image":"Je travaille avec une image";
+  $("kicker").textContent=(IMG.matiere?IMG.matiere+" – j":"J")+"e travaille avec une image · niveau "+(IMG.niveau||"A2");
   $("titreHaut").textContent=IMG.titre||IMG.nom; $("nomImg").textContent=IMG.titre||"J’observe";
   const im=$("image"); im.onerror=()=>feedback(false,"L’image ne s’affiche pas. Le site d’origine bloque peut-être le lien : enregistre l’image sur ton ordinateur, puis choisis le fichier."); im.src=IMG.src; $("imgGrand").src=IMG.src;
   $("notes").value=R.notes||""; R.bilan.forEach((v,i)=>$("bilan"+(i+1)).value=v||"");
@@ -399,11 +436,11 @@ function onglets(){
 function aller(i){ if(i<0||i>3) return; lireEtape(); etape=i; afficher(); sauver(); }
 function afficher(){
   const s=ETAPES[etape];
-  $("badge").textContent=s.badge; $("titreEtape").textContent=s.titre; $("introEtape").textContent=s.intro;
+  $("badge").textContent=s.badge+" · "+(IMG.niveau||"A2"); $("titreEtape").textContent=s.titre; $("introEtape").textContent=s.intro;
   $("aideTxt").classList.add("cache"); $("aideTxt").dataset.t=""; document.querySelectorAll(".aides .chip").forEach(b=>b.classList.remove("on"));
   $("btnTrad").classList.toggle("cache",langue==="fr"); $("feedback").classList.add("cache");
   $("btnPrec").disabled=etape===0; $("btnSuiv").disabled=etape===3;
-  $("corps").innerHTML=RENDUS[s.id](); rendreReperes(); majConsignePose();
+  $("corps").innerHTML=(langue!=="fr"?`<div class="trad" dir="${RTL.has(langue)?"rtl":"ltr"}">${esc(TRAD[s.id][langue])}</div>`:"")+RENDUS[s.id](); rendreReperes(); majConsignePose();
   if(s.id==="expliquer") majCompte();
   if(valides.has(etape)) feedback(true,"Étape déjà validée. Je peux encore modifier ma réponse.");
   onglets();
@@ -413,25 +450,25 @@ function aide(t,btn){
   document.querySelectorAll(".aides .chip").forEach(b=>b.classList.toggle("on",b===btn&&box.dataset.t!==t));
   if(box.dataset.t===t){ box.classList.add("cache"); box.dataset.t=""; return; }
   box.dir="ltr";
-  if(t==="objectif") box.innerHTML="<b>Mon objectif :</b> "+esc(s.objectif);
+  if(t==="objectif") box.innerHTML="<b>Mon objectif :</b> "+esc(s.objectif)+`<div class="muted" style="font-size:.85rem;margin-top:4px">Niveau ${IMG.niveau||"A2"} : ${esc(exigences())}</div>`;
   if(t==="methode") box.innerHTML="<b>Comment faire :</b> "+esc(s.methode)+'<div class="muted" style="font-size:.85rem;margin-top:4px">Essaie d’abord seul, puis utilise les aides si tu bloques.</div>';
   if(t==="langue"){ box.textContent=TRAD[s.id][langue]||""; box.dir=RTL.has(langue)?"rtl":"ltr"; }
   box.dataset.t=t; box.classList.remove("cache");
 }
-function changerLangue(l){ langue=l; try{localStorage.setItem("mavideo:langue",l);}catch(e){} if(IMG) afficher(); }
+function changerLangue(l){ langue=l; majTradChoix(); try{localStorage.setItem("montexte:langue",l);}catch(e){} if(IMG) afficher(); }
 
 const optReperes=sel=>`<option value="">—</option>`+R.reperes.map((p,i)=>`<option value="${i}" ${String(sel)===String(i)?"selected":""}>${i+1}${p.quoi?" · "+esc(p.quoi.slice(0,30)):""}</option>`).join("");
 const RENDUS={
  decouvrir(){ const r=R.decouvrir;
   return `<div class="soft"><h3>1. C’est quel type de document ?</h3><div class="row">${NATURES.map(t=>`<label class="chip ${r.nature===t?"on":""}" style="cursor:pointer"><input type="radio" name="nature" value="${esc(t)}" class="cache" ${r.nature===t?"checked":""} onchange="document.querySelectorAll('[name=nature]').forEach(x=>x.parentElement.classList.toggle('on',x.checked));sauver()">${esc(t)}</label>`).join("")}</div></div>
-   <div class="soft"><h3>2. Je présente le document</h3><p class="muted" style="margin:0;font-size:.88rem">Je cherche dans la légende, le titre, la signature. Si je ne trouve pas, j’écris « je ne sais pas ».</p>
+   <div class="soft"><h3>2. Je présente le document <small class="muted">(au moins ${N().pres} information${N().pres>1?"s":""})</small></h3><p class="muted" style="margin:0;font-size:.88rem">Je cherche dans la légende, le titre, la signature. Si je ne trouve pas, j’écris « je ne sais pas ».</p>
     <div class="grid2"><label class="f">Titre ou légende<input class="c" id="d_titre" value="${esc(r.titre||"")}"></label><label class="f">Auteur<input class="c" id="d_auteur" value="${esc(r.auteur||"")}"></label>
     <label class="f">Date<input class="c" id="d_date" value="${esc(r.date||"")}"></label><label class="f">Source <small>(livre, site, musée…)</small><input class="c" id="d_source" value="${esc(r.source||"")}"></label></div></div>
    <div class="soft"><h3>3. De quoi parle le document ?</h3>
-    <label class="f">Le sujet, en quelques mots<input class="c" id="d_sujet" value="${esc(r.sujet||"")}" placeholder="Ce document parle de…"></label>
-    <label class="f">Ma première impression <small>(une phrase, même simple)</small><textarea class="c" id="d_phrase" placeholder="Quand je regarde cette image, je vois / je ressens…">${esc(r.phrase||"")}</textarea></label></div>`; },
+    <label class="f">Le sujet${IMG.niveau==="A1"?" <small>(un ou deux mots suffisent)</small>":", en quelques mots"}<input class="c" id="d_sujet" value="${esc(r.sujet||"")}" placeholder="Ce document parle de…"></label>
+    ${N().phrase?`<label class="f">Ma première impression <small>(une phrase, même simple)</small><textarea class="c" id="d_phrase" placeholder="Quand je regarde cette image, je vois / je ressens…">${esc(r.phrase||"")}</textarea></label>`:""}</div>`; },
  decrire(){
-  return `<div class="soft"><h3>Mes repères <small class="muted">(au moins 4)</small></h3>
+  return `<div class="soft"><h3>Mes repères <small class="muted">(au moins ${N().reperes})</small></h3>
    <p class="muted" style="margin:0;font-size:.88rem">👆 Je clique sur l’image pour ajouter un repère. Pour chaque repère, je dis <b>ce que c’est</b> et <b>où</b> il se trouve.</p>
    <div id="listeReperes">${R.reperes.length?R.reperes.map((p,i)=>`<div class="mot" data-ri="${i}" style="grid-template-columns:auto 1fr 1fr auto">
      <span class="num">${i+1}</span>
@@ -440,7 +477,7 @@ const RENDUS={
      <button class="btn btn-blanc btn-p" style="color:#b91c1c" onclick="supprimerRepere(${i})">✕</button></div>`).join(""):'<p class="muted" style="margin-top:12px">Aucun repère pour l’instant : clique sur l’image.</p>'}</div></div>
    <div class="soft"><h3>Ce qui attire mon regard en premier</h3><textarea class="c" id="r_regard" placeholder="Ce que je remarque d’abord, c’est… parce que…">${esc(R.decouvrir.regard||"")}</textarea></div>`; },
  retenir(){
-  return `<div class="soft"><h3>Mon lexique <small class="muted">(au moins 5 mots)</small></h3>
+  return `<div class="soft"><h3>Mon lexique <small class="muted">(au moins ${N().mots} mots)</small></h3>
    <div id="listeMots">${R.mots.map((m,i)=>`<div class="mot" data-i="${i}">
     <div><input class="c" data-m="mot" value="${esc(m.mot||"")}" placeholder="Le mot en français" style="margin:0;font-weight:800">
       <select class="c" data-m="cat">${["",...CATEGORIES].map(c=>`<option ${m.cat===c?"selected":""} value="${esc(c)}">${c||"C’est…"}</option>`).join("")}</select></div>
@@ -453,11 +490,12 @@ const RENDUS={
    ${R.reperes.some(p=>p.quoi&&!R.mots.some(m=>norm(m.mot)===norm(p.quoi)))?`<button class="btn btn-blanc btn-p" onclick="reprendreReperes()">↺ Reprendre mes repères de l’étape 2</button>`:""}</div></div>`; },
  expliquer(){
   return `<div class="grid2" style="margin-top:12px">
-    <div class="soft" style="margin:0"><h3>Des débuts de phrase</h3><p class="muted" style="margin:0;font-size:.88rem">Je clique pour l’ajouter à mon texte.</p>${AMORCES.map(a=>`<button class="amorce" onclick="inserer('\\n${esc(a.replace("…","")).replace(/'/g,"\\'")} ')">${esc(a)}</button>`).join("")}</div>
+    <div class="soft" style="margin:0"><h3>Des débuts de phrase</h3><p class="muted" style="margin:0;font-size:.88rem">Je clique pour l’ajouter à mon texte.</p>${AMORCES_NIV[IMG.niveau||"A2"].map(a=>`<button class="amorce" onclick="inserer('\\n${esc(a.replace("…","")).replace(/'/g,"\\'")} ')">${esc(a)}</button>`).join("")}
+     ${N().connecteur?`<h3 style="margin-top:10px">Des mots de liaison</h3><div class="row">${CONNECTEURS.map(c=>`<button class="chip" onclick="inserer('${c.replace(/'/g,"\\'")} ')">${c}</button>`).join("")}</div>`:""}</div>
     <div class="soft" style="margin:0"><h3>Mes mots</h3>
      <div class="row" style="margin-top:6px">${R.mots.filter(m=>m.mot).map(m=>`<button class="chip" onclick="inserer('${esc(m.mot).replace(/'/g,"\\'")} ')">${esc(m.mot)}</button>`).join("")||'<span class="muted">Ajoute des mots à l’étape 3.</span>'}</div>
      ${R.reperes.some(p=>p.quoi)?`<h3 style="margin-top:12px">Mes repères</h3><ul style="margin:0;padding-left:18px;font-size:.9rem">${R.reperes.filter(p=>p.quoi).map(p=>`<li>${esc(p.ou)} : ${esc(p.quoi)}</li>`).join("")}</ul>`:""}</div></div>
-   <div class="soft"><h3>Mon explication</h3><textarea class="c" id="e_texte" style="min-height:170px" oninput="majCompte()" placeholder="Ce document est…">${esc(R.texte||"")}</textarea>
+   <div class="soft"><h3>Mon explication</h3><textarea class="c" id="e_texte" style="min-height:170px" oninput="majCompte()" placeholder="${esc(AMORCES_NIV[IMG.niveau||"A2"][0])}">${esc(R.texte||"")}</textarea>
     <div style="margin-top:6px"><span id="compte" class="compte"></span></div></div>`; }
 };
 
@@ -482,22 +520,25 @@ function inserer(txt){ const ta=$("e_texte"); const d=ta.selectionStart??ta.valu
   ta.value=v.slice(0,d)+txt+v.slice(ta.selectionEnd??d); ta.focus(); ta.selectionStart=ta.selectionEnd=d+txt.length; majCompte(); sauver(); }
 function motsUtilises(){ const t=" "+norm(R.texte||"")+" "; return R.mots.filter(m=>m.mot&&t.includes(norm(m.mot.trim()))); }
 const nbPhrases=s=>String(s||"").split(/[.!?\n]+/).filter(p=>nbMots(p)>=3).length;
-function majCompte(){ if(!$("e_texte")) return; R.texte=$("e_texte").value; const n=nbMots(R.texte), p=nbPhrases(R.texte), u=motsUtilises().length;
-  $("compte").innerHTML=`<span class="${p>=3?"compte ok":""}">${p>=3?"✔":"•"} ${p} phrase(s) sur 3</span> · <span class="${u>=2?"compte ok":""}">${u>=2?"✔":"•"} ${u} mot(s) de mon lexique sur 2</span> · <span class="${n>=25?"compte ok":""}">${n>=25?"✔":"•"} ${n} mots sur 25</span>`; }
+const aConnecteur=()=>{ const t=" "+norm(R.texte).replace(/[^a-z' ]/g," ")+" "; return CONNECTEURS.some(c=>t.includes(" "+norm(c)+" ")); };
+function majCompte(){ if(!$("e_texte")) return; R.texte=$("e_texte").value; const n=N(), p=nbPhrases(R.texte), u=motsUtilises().length, m=nbMots(R.texte);
+  const ok=(c,x)=>`<span class="${c?"compte ok":""}">${c?"✔":"•"} ${x}</span>`;
+  $("compte").innerHTML=[ok(p>=n.phrases,`${p} phrase(s) sur ${n.phrases}`),ok(m>=n.longueur,`${m} mots sur ${n.longueur}`),ok(u>=n.motsLex,`${u} mot(s) de mon lexique sur ${n.motsLex}`),n.connecteur?ok(aConnecteur(),"un mot de liaison"):""].filter(Boolean).join(" · "); }
 
 /* ================= Vérification ================= */
 function feedback(ok,m){ const f=$("feedback"); f.className="feedback "+(ok?"ok":"ko"); f.textContent=m; }
 function valider(){
   lireEtape(); const id=ETAPES[etape].id; let ok=false, msg="";
+  const nv=N(), niv=IMG.niveau||"A2";
   if(id==="decouvrir"){ const r=R.decouvrir, pres=["titre","auteur","date","source"].filter(k=>nbMots(r[k])>=1).length;
-    const manque=[!r.nature&&"le type de document",pres<2&&"au moins 2 informations de présentation (titre, auteur, date ou source)",!r.sujet&&"le sujet",nbMots(r.phrase)<4&&"une phrase (au moins 4 mots)"].filter(Boolean);
+    const manque=[!r.nature&&"le type de document",pres<nv.pres&&`au moins ${nv.pres} information(s) de présentation (titre, auteur, date ou source)`,!nbMots(r.sujet)&&"le sujet",nv.phrase&&nbMots(r.phrase)<4&&"une phrase (au moins 4 mots)"].filter(Boolean);
     ok=!manque.length; msg=ok?"Bravo : tu as bien présenté le document.":"Il manque encore : "+manque.join(", ")+"."; }
-  if(id==="decrire"){ const n=R.reperes.filter(p=>nbMots(p.quoi)>=1).length; ok=n>=4;
-    msg=ok?`Bravo : tu as décrit ${n} éléments de l’image et tu as dit où ils se trouvent.`:`Tu as décrit ${n} élément(s). Il en faut au moins 4 : clique sur l’image, puis écris ce que tu vois.`; }
-  if(id==="retenir"){ const c=R.mots.filter(m=>m.mot&&m.sens).length; ok=c>=5;
-    msg=ok?`Bravo : ton lexique contient ${c} mots avec leur sens.`:`Tu as ${c} mot(s) avec leur sens. Il en faut au moins 5 : pour chaque mot, écris aussi ce qu’il veut dire.`; }
-  if(id==="expliquer"){ const p=nbPhrases(R.texte), u=motsUtilises().length, n=nbMots(R.texte); ok=p>=3&&u>=2&&n>=25;
-    msg=ok?"Bravo : ton explication est complète. Tu peux maintenant faire ta trace de travail.":"Ton texte doit avoir au moins 3 phrases, 25 mots et utiliser 2 mots de ton lexique. Regarde le compteur sous ton texte."; }
+  if(id==="decrire"){ const n=R.reperes.filter(p=>nbMots(p.quoi)>=1).length; ok=n>=nv.reperes;
+    msg=ok?`Bravo : tu as décrit ${n} éléments de l’image et tu as dit où ils se trouvent.`:`Tu as décrit ${n} élément(s). Il en faut au moins ${nv.reperes} pour le niveau ${niv} : clique sur l’image, puis écris ce que tu vois.`; }
+  if(id==="retenir"){ const c=R.mots.filter(m=>m.mot&&m.sens).length; ok=c>=nv.mots;
+    msg=ok?`Bravo : ton lexique contient ${c} mots avec leur sens.`:`Tu as ${c} mot(s) avec leur sens. Il en faut au moins ${nv.mots} pour le niveau ${niv} : pour chaque mot, écris aussi ce qu’il veut dire.`; }
+  if(id==="expliquer"){ const p=nbPhrases(R.texte), u=motsUtilises().length, n=nbMots(R.texte); ok=p>=nv.phrases&&u>=nv.motsLex&&n>=nv.longueur&&(!nv.connecteur||aConnecteur());
+    msg=ok?"Bravo : ton explication est complète. Tu peux maintenant faire ta trace de travail.":`Pour le niveau ${niv}, ton texte doit avoir ${exigences()} Regarde le compteur sous ton texte.`; }
   if(ok) valides.add(etape); else valides.delete(etape);
   feedback(ok,msg+(ok&&etape<3?" Tu peux passer à l’étape suivante.":"")); onglets(); sauver();
   if(ok&&valides.size===4){ genererTrace(); setTimeout(()=>$("trace").scrollIntoView({behavior:"smooth"}),600); }
@@ -517,7 +558,7 @@ function imageAnnotee(cb){
 function genererTrace(){
   lireEtape(); const d=R.decouvrir;
   const pres=[d.titre&&`Titre : ${d.titre}`,d.auteur&&`Auteur : ${d.auteur}`,d.date&&`Date : ${d.date}`,d.source&&`Source : ${d.source}`].filter(Boolean).join(" · ");
-  const T=[`${IMG.titre||"Mon image"}${IMG.matiere?" – "+IMG.matiere:""}`, "",
+  const T=[`${IMG.titre||"Mon image"}${IMG.matiere?" – "+IMG.matiere:""} (niveau ${IMG.niveau||"A2"})`, "",
     "1. Je découvre", `C’est ${d.nature||"…"}.${pres?" "+pres+".":""}`, `Sujet : ${d.sujet||"…"}.`, d.phrase?`Ma première impression : ${d.phrase}`:"", "",
     "2. Je décris", ...R.reperes.filter(p=>p.quoi).map(p=>`(${R.reperes.indexOf(p)+1}) ${p.ou[0].toUpperCase()+p.ou.slice(1)} : ${p.quoi}`), d.regard?`Ce qui attire mon regard : ${d.regard}`:"", "",
     "3. Je retiens – mon lexique", ...R.mots.filter(m=>m.mot).map(m=>`• ${m.mot}${m.cat?" ("+m.cat+")":""} : ${m.sens||"…"}${m.rep!==""&&m.rep!=null?" → repère "+(+m.rep+1):""}`), "",
@@ -535,10 +576,11 @@ function telechargerImage(){ imageAnnotee(u=>{ if(!u) return alert("Le site d’
 
 /* ================= Démarrage ================= */
 (function(){
-  try{ langue=localStorage.getItem("mavideo:langue")||"fr"; }catch(e){}
+  try{ langue=localStorage.getItem("montexte:langue")||"fr"; }catch(e){} if(!LANGUES[langue]) langue="fr";
   $("maLangue").innerHTML=Object.entries(LANGUES).map(([k,n])=>`<option value="${k}" ${k===langue?"selected":""}>${n}</option>`).join("");
   $("zoneColler").addEventListener("click",()=>$("zoneColler").focus());
   const q=new URLSearchParams(location.search), l=q.get("image");
+  const nv0=q.get("niveau"); if(NIVEAUX[nv0]) niveauChoisi=nv0; rendreNiveaux(); majTradChoix();
   if(l){ $("lienImg").value=l; $("titreImg").value=q.get("titre")||""; $("matiere").value=q.get("matiere")||""; commencer(); }
   else listerReprises();
 })();

@@ -23,15 +23,25 @@ Viennent ensuite le bilan, l’autoévaluation et la trace (copier, imprimer, t�
 `…/modele/ma-video.html?video=LIEN_YOUTUBE&titre=Les volcans`
 L’élève arrive directement sur la vidéo.
 
-### Et pour une image : `ma-image.html`
+### Et pour une image : `ma-image.html` (niveaux A1 / A2 / B1)
 Cette appli fonctionne sur le même principe, avec **n’importe quelle image** : photo, carte, affiche, tableau, dessin de presse, graphique, page de manuel prise en photo… L’élève choisit un fichier, colle un lien ou fait un copier-coller.
 1. **Je découvre** : nature du document, titre, auteur, date, source, sujet, première impression.
 2. **Je décris** : il clique sur l’image pour poser des **repères numérotés** (au moins 4), dit ce qu’il voit et où (premier plan, en haut à gauche…).
 3. **Je retiens** : son lexique, relié aux repères.
 4. **J’explique** : il décrit, interprète et dit l’intention de l’auteur, avec des débuts de phrase.
 
+L’élève choisit son **niveau** (A1, A2 ou B1) : le nombre de repères, de mots et la longueur de l’explication s’adaptent, et des mots de liaison sont proposés en B1. Les consignes sont traduites en **arabe, turc, ukrainien, albanais et géorgien**.
+
 Outils d’observation : **loupe**, **grille des zones** (le vocabulaire de localisation), affichage en grand. La trace s’imprime **avec l’image annotée**, et l’image annotée peut être téléchargée.
 Lien direct pour la classe : `…/modele/ma-image.html?image=LIEN_DE_L_IMAGE&titre=…`
+
+
+### Et pour un texte : `ma-texte.html` (niveaux A1 / A2 / B1)
+L’élève **importe son texte** : fichier Word (.docx), PDF, LibreOffice (.odt), RTF, page web (.html), texte (.txt), **photo d’un texte** (les mots sont lus automatiquement), copier-coller ou glisser-déposer. Il choisit son niveau et sa langue d’appui (arabe, turc, ukrainien, albanais, géorgien).
+- Mots cliquables : écouter, traduire, ajouter au lexique ; lecture à voix haute ; lecture ligne par ligne ; taille du texte réglable.
+- Repérage : il sélectionne des mots dans le texte puis clique sur 📌.
+- Exigences adaptées au niveau ; une phrase recopiée du texte est signalée.
+- Trace téléchargeable pour **Word**, pour **LibreOffice**, en **.txt**, ou imprimable en PDF.
 
 ### 2. L’enseignant prépare un parcours précis (facultatif)
 Il ajoute des questions propres à la vidéo, des réponses vérifiées, des sous-titres traduits et un lexique fourni. La suite de ce guide explique comment faire.

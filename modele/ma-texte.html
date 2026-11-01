@@ -124,12 +124,17 @@ label.f small{font-weight:500;color:var(--gris)}
     <div class="label">Étape 0</div>
     <h2>Je choisis mon texte et mon niveau</h2>
     <div id="tradChoix" class="trad cache"></div>
-    <label class="f">Je colle mon texte ici <small>(ou j’ouvre un fichier .txt)</small>
-      <textarea class="c" id="texteSource" style="min-height:200px" placeholder="Je copie le texte (manuel, site internet, document du professeur…) puis je le colle ici avec Ctrl + V." oninput="majInfosTexte()"></textarea></label>
-    <div class="row" style="justify-content:space-between;margin-top:6px">
-      <label class="btn btn-blanc btn-p" style="cursor:pointer">Ouvrir un fichier .txt<input type="file" accept=".txt,text/plain" class="cache" onchange="ouvrirFichier(this)"></label>
-      <span class="muted" id="infosTexte" style="font-size:.88rem"></span>
+    <div class="source" style="margin-top:10px">
+      <div><h3>📄 Un fichier</h3><label class="btn btn-bleu btn-p" style="cursor:pointer;margin-top:4px">Ouvrir un fichier<input type="file" id="fichierTxt" class="cache" onchange="importer(this.files[0]);this.value=''"></label>
+        <p class="muted" style="font-size:.8rem;margin:6px 0 0">Word (.docx), PDF, LibreOffice (.odt), RTF, page web (.html), texte (.txt).</p></div>
+      <div><h3>📷 Une photo d’un texte</h3><label class="btn btn-blanc btn-p" style="cursor:pointer;margin-top:4px">Prendre ou choisir une photo<input type="file" accept="image/*" capture="environment" class="cache" onchange="importer(this.files[0]);this.value=''"></label>
+        <p class="muted" style="font-size:.8rem;margin:6px 0 0">Une page du manuel ou une feuille : l’appli lit les mots. Je vérifie ensuite le texte.</p></div>
+      <div><h3>📋 Copier-coller</h3><p class="muted" style="font-size:.85rem;margin:4px 0 0">Je copie le texte (site internet, document…) et je le colle dans la grande case ci-dessous. Je peux aussi y glisser un fichier.</p></div>
     </div>
+    <div id="progresImport" class="feedback ok cache"></div>
+    <label class="f">Mon texte <small>(je peux le corriger avant de commencer)</small>
+      <textarea class="c" id="texteSource" style="min-height:200px" placeholder="Je copie le texte (manuel, site internet, document du professeur…) puis je le colle ici avec Ctrl + V." oninput="majInfosTexte()"></textarea></label>
+    <div class="row" style="justify-content:flex-end;margin-top:6px"><span class="muted" id="infosTexte" style="font-size:.88rem"></span></div>
     <div class="grid2" style="margin-top:4px">
       <label class="f">Le titre du texte <small>(si je le connais)</small><input class="c" id="titreTxt"></label>
       <label class="f">La matière <small>(facultatif)</small><input class="c" id="matiere" placeholder="Ex. : Histoire, SVT, Français…"></label>
@@ -206,7 +211,9 @@ label.f small{font-weight:500;color:var(--gris)}
       <button class="btn btn-vert" onclick="genererTrace()">Générer ma trace</button>
       <button class="btn btn-blanc" onclick="copierTrace()">Copier</button>
       <button class="btn btn-blanc" onclick="genererTrace();print()">Imprimer / PDF</button>
-      <button class="btn btn-blanc" onclick="telecharger()">Télécharger (.txt)</button>
+      <button class="btn btn-blanc" onclick="telecharger('doc')">Télécharger pour Word</button>
+      <button class="btn btn-blanc" onclick="telecharger('odt')">Télécharger pour LibreOffice</button>
+      <button class="btn btn-blanc" onclick="telecharger('txt')">Télécharger (.txt)</button>
     </div>
     <div id="zoneImpression" style="margin-top:14px"><div id="traceFinale" class="trace-box">Clique sur « Générer ma trace ».</div></div>
   </section>
@@ -215,6 +222,7 @@ label.f small{font-weight:500;color:var(--gris)}
 
 <div id="bulleMot" class="bulle-mot cache" role="dialog"></div>
 
+<script src="lire-fichiers.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -310,7 +318,22 @@ function rendreNiveaux(){ $("niveauxChoix").innerHTML=Object.values(NIVEAUX).map
 function majInfosTexte(){ const s=$("texteSource").value, n=nbMots(s);
   const ph=s.split(/[.!?]+/).filter(x=>nbMots(x)>0), moy=ph.length?Math.round(n/ph.length):0;
   $("infosTexte").textContent=n?`${n} mots · ${ph.length} phrase(s) · environ ${moy} mots par phrase`:""; }
-function ouvrirFichier(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $("texteSource").value=r.result; if(!$("titreTxt").value) $("titreTxt").value=f.name.replace(/\.[^.]+$/,""); majInfosTexte(); }; r.readAsText(f); }
+async function importer(f){
+  if(!f) return; const pr=$("progresImport"), err=$("erreurChoix"); err.classList.add("cache");
+  pr.className="feedback ok"; pr.textContent="Je lis le fichier « "+f.name+" »…";
+  try{
+    const txt=await lireFichierTexte(f,m=>pr.textContent=m);
+    if(nbMots(txt)<3) throw new Error("je n’ai pas trouvé de texte dans ce fichier");
+    if($("texteSource").value.trim()&&!confirm("Remplacer le texte déjà présent par celui du fichier ?")){ pr.classList.add("cache"); return; }
+    $("texteSource").value=txt; if(!$("titreTxt").value) $("titreTxt").value=f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ");
+    majInfosTexte(); pr.textContent=`✔ Texte importé (${nbMots(txt)} mots).`+(f.type.startsWith("image/")?" Vérifie-le : la lecture d’une photo peut faire des erreurs.":" Je peux le corriger dans la case.");
+  }catch(e){ pr.classList.add("cache"); err.textContent="Je n’arrive pas à lire ce fichier : "+e.message+"."; err.classList.remove("cache"); }
+}
+(function(){ const ta=document.getElementById("texteSource");
+  ta.addEventListener("dragover",e=>{e.preventDefault();ta.style.borderColor="#1d4ed8";});
+  ta.addEventListener("dragleave",()=>ta.style.borderColor="");
+  ta.addEventListener("drop",e=>{ ta.style.borderColor=""; const f=e.dataTransfer.files[0]; if(f){ e.preventDefault(); importer(f); } });
+})();
 function commencer(){
   const s=$("texteSource").value.replace(/\r/g,"").trim();
   if(nbMots(s)<15){ const e=$("erreurChoix"); e.textContent="Colle d’abord un texte (au moins 15 mots)."; e.classList.remove("cache"); return; }
@@ -519,7 +542,15 @@ function genererTrace(){
   $("traceFinale").textContent=T.filter((x,i,a)=>!(x===""&&a[i-1]==="")).join("\n").replace(/\n{3,}/g,"\n\n"); sauver();
 }
 function copierTrace(){ genererTrace(); navigator.clipboard&&navigator.clipboard.writeText($("traceFinale").textContent).then(()=>{ const x=$("traceInfo"),o=x.textContent; x.textContent="✔ Trace copiée."; setTimeout(()=>x.textContent=o,2500); },()=>{}); }
-function telecharger(){ genererTrace(); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([$("traceFinale").textContent],{type:"text/plain;charset=utf-8"})); a.download="ma-trace-texte.txt"; a.click(); }
+function telecharger(fmt){
+  genererTrace(); const txt=$("traceFinale").textContent, nom="ma-trace-"+(TX.titre||"texte").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+  const html=txt.split("\n").map(l=>/^(\d\. |Mon bilan|Je m’évalue)/.test(l)?`<h2>${esc(l)}</h2>`:l?`<p>${esc(l)}</p>`:"").join("");
+  let blob, ext=fmt;
+  if(fmt==="txt") blob=new Blob(["\ufeff"+txt],{type:"text/plain;charset=utf-8"});
+  if(fmt==="doc"){ blob=new Blob([`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Ma trace</title><style>body{font-family:Arial;font-size:12pt}h2{font-size:14pt;color:#1d4ed8;margin-top:14pt}p{margin:3pt 0}</style></head><body>${html}</body></html>`],{type:"application/msword"}); }
+  if(fmt==="odt"){ blob=new Blob([`<?xml version="1.0" encoding="UTF-8"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text"><office:body><office:text>${txt.split("\n").map(l=>`<text:p>${esc(l)}</text:p>`).join("")}</office:text></office:body></office:document>`],{type:"application/vnd.oasis.opendocument.text-flat-xml"}); ext="fodt"; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nom+"."+ext; a.click();
+}
 
 /* ================= Démarrage ================= */
 (function(){
