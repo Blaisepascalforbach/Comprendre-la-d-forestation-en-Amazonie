@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Éditeur de parcours vidéo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bleu:#1d4ed8;--bleu-c:#eff6ff;--vert:#15803d;--vert-c:#ecfdf5;--encre:#0f172a;--gris:#64748b;--bord:#dbe3ef;--orange-c:#fffbeb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f1f5f9;color:var(--encre);line-height:1.45}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.barre{position:sticky;top:0;z-index:20;background:#0f172a;color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.barre h1{font-size:1.05rem;margin:0 14px 0 0;font-weight:900}
+.btn{border:0;border-radius:10px;padding:8px 13px;font-weight:800;font-size:.88rem;text-decoration:none;display:inline-block}
+.btn-bleu{background:var(--bleu);color:#fff}.btn-vert{background:var(--vert);color:#fff}
+.btn-blanc{background:#fff;color:var(--encre);border:1px solid var(--bord)}
+.btn-sombre{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.btn-rouge{background:#fff;color:#b91c1c;border:1px solid #fecaca}
+.btn-p{padding:4px 9px;font-size:.8rem;border-radius:8px}
+.grille{display:grid;grid-template-columns:minmax(340px,.85fr) minmax(0,1.15fr);gap:18px;padding:18px;max-width:1500px;margin:0 auto;align-items:start}
+@media(max-width:1000px){.grille{grid-template-columns:1fr}.colle{position:static!important}}
+.colle{position:sticky;top:64px}
+.carte{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 8px 24px -20px rgba(15,23,42,.5);margin-bottom:16px}
+details.carte>summary{cursor:pointer;font-weight:900;font-size:1.08rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.carte>summary::after{content:"▸";color:var(--gris)}
+details.carte[open]>summary::after{content:"▾"}
+details.carte>summary small{font-weight:600;color:var(--gris);font-size:.82rem;margin-left:8px}
+.label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--bleu)}
+label.f{display:block;margin-top:10px;font-weight:700;font-size:.88rem}
+label.f small{font-weight:500;color:var(--gris)}
+input.c,textarea.c,select.c{width:100%;margin-top:4px;border:1.5px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#fff}
+textarea.c{min-height:70px;resize:vertical}
+textarea.c.grand{min-height:150px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+input.c:focus,textarea.c:focus{border-color:var(--bleu);outline:none}
+.l2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.l3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:600px){.l2,.l3{grid-template-columns:1fr}}
+.temps{display:flex;gap:6px;align-items:center}
+.temps input{width:90px}
+.chrono{background:var(--bleu-c);color:var(--bleu);border:1px solid #bfdbfe;border-radius:8px;padding:6px 8px;font-weight:800;font-size:.8rem;margin-top:4px;white-space:nowrap}
+.video{position:relative;width:100%;aspect-ratio:16/9;background:#020617;border-radius:14px;overflow:hidden}
+.video video,.video iframe{width:100%;height:100%;border:0;display:block}
+.vide{color:#94a3b8;display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px}
+.compteur{font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums}
+.item{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-top:12px;background:#f8fafc}
+.item-tete{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.item-tete b{font-size:1rem}
+.aide{font-size:.82rem;color:var(--gris);margin:4px 0 0}
+.code{font-family:ui-monospace,Menlo,monospace;background:#f1f5f9;border-radius:6px;padding:1px 5px;font-size:.82rem}
+.langs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.langs label{border:1px solid var(--bord);border-radius:999px;padding:4px 10px;font-size:.85rem;font-weight:700;cursor:pointer;background:#fff}
+.langs label:has(input:checked){background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.langs input{display:none}
+.onglets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.onglets button{border:1px solid var(--bord);background:#fff;border-radius:999px;padding:4px 11px;font-weight:700;font-size:.84rem}
+.onglets button.on{background:var(--encre);color:#fff}
+.alerte{border-radius:12px;padding:10px 12px;margin-top:10px;font-size:.9rem}
+.alerte.ok{background:var(--vert-c);border:1px solid #86efac}
+.alerte.ko{background:var(--orange-c);border:1px solid #fcd34d}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal>.carte{max-width:820px;width:100%;max-height:90vh;overflow:auto;position:relative}
+.cache{display:none!important}
+.fermer{position:absolute;right:12px;top:6px;background:none;border:0;font-size:1.7rem}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:60}
+</style>
+</head>
+<body>
+
+<div class="barre">
+  <h1>🎬 Éditeur de parcours vidéo</h1>
+  <button class="btn btn-sombre" onclick="nouveau()">Nouveau</button>
+  <label class="btn btn-sombre" style="cursor:pointer">Ouvrir un fichier parcours<input type="file" accept=".js,.json" class="cache" onchange="ouvrirFichier(this)"></label>
+  <button class="btn btn-sombre" onclick="chargerExemple()">Charger l’exemple</button>
+  <button class="btn btn-sombre" onclick="ouvrirModal('modalIA')">✨ Préparer avec une IA</button>
+  <span style="flex:1"></span>
+  <button class="btn btn-blanc" onclick="verifier(true)">Vérifier</button>
+  <button class="btn btn-bleu" onclick="apercu()">👁 Aperçu élève</button>
+  <button class="btn btn-vert" onclick="exporter()">⬇ Enregistrer le parcours</button>
+</div>
+
+<div class="grille">
+  <!-- COLONNE VIDÉO -->
+  <div class="colle">
+    <div class="carte">
+      <div class="label">1. La vidéo</div>
+      <label class="f">Lien de la vidéo <small>(YouTube, ou lien direct vers un fichier .mp4)</small>
+        <input class="c" id="srcVideo" placeholder="https://www.youtube.com/watch?v=…  ou  videos/ma-video.mp4"></label>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-bleu btn-p" onclick="appliquerVideo()">Charger ce lien</button>
+        <label class="btn btn-blanc btn-p" style="cursor:pointer">…ou choisir un fichier sur l’ordinateur<input type="file" accept="video/*" class="cache" onchange="fichierVideo(this)"></label>
+      </div>
+      <p class="aide" id="videoInfo"></p>
+      <div class="video" style="margin-top:10px" id="lecteur"><div class="vide">Colle un lien YouTube ou choisis un fichier vidéo pour commencer.</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px">
+        <div><div class="aide">Position dans la vidéo</div><div class="compteur" id="compteur">0:00</div></div>
+        <div style="text-align:right" class="aide">Mets la vidéo en pause au bon moment, puis clique sur <span class="chrono">⏱ ici</span> à côté d’un champ de temps.</div>
+      </div>
+    </div>
+    <div class="carte" id="etat">
+      <div class="label">État du parcours</div>
+      <div id="etatTxt" class="aide">—</div>
+      <div id="verifTxt"></div>
+    </div>
+  </div>
+
+  <!-- COLONNE FORMULAIRES -->
+  <div id="formulaires"></div>
+</div>
+
+<!-- MODALE EXPORT -->
+<div class="modal cache" id="modalExport" onclick="if(event.target===this)fermerModal(this.id)">
+  <div class="carte">
+    <button class="fermer" onclick="fermerModal('modalExport')">×</button>
+    <div class="label">Parcours enregistré</div>
+    <h2 style="margin:4px 0">Mettre le parcours en ligne</h2>
+    <div id="exportTxt"></div>
+  </div>
+</div>
+
+<!-- MODALE IA -->
+<div class="modal cache" id="modalIA" onclick="if(event.target===this)fermerModal(this.id)">
+  <div class="carte">
+    <button class="fermer" onclick="fermerModal('modalIA')">×</button>
+    <div class="label">Gagner du temps</div>
+    <h2 style="margin:4px 0">Préparer le parcours avec une IA</h2>
+    <ol>
+      <li>Remplis d’abord l’onglet <b>Sous-titres et transcription</b> (au minimum la transcription en français, idéalement avec les temps), ainsi que le titre, le public et les langues d’appui.</li>
+      <li>Copie la consigne ci-dessous et colle-la dans Claude (ou une autre IA).</li>
+      <li>Colle la réponse de l’IA dans la case du bas, puis clique sur <b>Importer</b>. Tu pourras tout relire et corriger.</li>
+    </ol>
+    <button class="btn btn-bleu" onclick="copierPromptIA()">📋 Copier la consigne pour l’IA</button>
+    <label class="f">Réponse de l’IA <small>(le texte qui commence par « { »)</small>
+      <textarea class="c grand" id="iaRetour" placeholder='{ "titre": "…", "etapes": [ … ] }'></textarea></label>
+    <button class="btn btn-vert" style="margin-top:8px" onclick="importerTexte($('iaRetour').value)">Importer</button>
+  </div>
+</div>
+
+<script src="lecteur-video.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const BROUILLON="parcours:brouillon";
+
+/* ---------- Catalogue des langues d'appui ---------- */
+const CATALOGUE={en:"English",ar:"العربية",es:"Español",pt:"Português",it:"Italiano",de:"Deutsch",ro:"Română",ru:"Русский",uk:"Українська",
+  tr:"Türkçe",sq:"Shqip",pl:"Polski",bg:"Български",ka:"ქართული",hy:"Հայերեն",fa:"فارسی",ps:"پښتو",prs:"دری",ur:"اردو",bn:"বাংলা",
+  ta:"தமிழ்",hi:"हिन्दी",zh:"中文",vi:"Tiếng Việt",ti:"ትግርኛ",am:"አማርኛ",so:"Soomaali",sw:"Kiswahili",ln:"Lingála",wo:"Wolof",mg:"Malagasy",ku:"Kurdî"};
+const RTL=new Set(["ar","fa","ps","prs","ur"]);
+const TYPES={reponse:"Réponse courte",qcm:"QCM (une bonne réponse)",associer:"Associer (relier deux colonnes)",phrase:"Construire une phrase (banque de mots)",bilan:"Bilan guidé (choix → trace rédigée)"};
+
+/* ---------- Données ---------- */
+function vide(){
+  return {titre:"",discipline:"",public:"",accroche:"",video:"",cadrage:[],objectifFinal:"",
+    langues:{fr:{nom:"Français"},frs:{nom:"FR simple"}},sousTitres:{fr:[]},bulles:[],transcription:{fr:""},
+    etapes:[],autoevaluation:[],lexique:[],eclairage:{intro:"",cartes:[],paragraphes:[]},nomFichier:""};
+}
+let D=vide(), videoLocale=null, L=null, ongletLangue={st:"fr",lex:null};
+
+function completer(d){
+  const v=vide(); for(const k in v) if(d[k]===undefined) d[k]=v[k];
+  d.langues.fr=d.langues.fr||{nom:"Français"};
+  d.eclairage=Object.assign({intro:"",cartes:[],paragraphes:[]},d.eclairage||{});
+  d.etapes.forEach(e=>{e.aide=e.aide||{}; e.consigneTraduite=e.consigneTraduite||{};});
+  d.lexique.forEach(e=>e.traductions=e.traductions||{});
+  return d;
+}
+const languesAppui=()=>Object.keys(D.langues).filter(k=>k!=="fr"&&k!=="frs");
+const languesTexte=()=>Object.keys(D.langues);
+const nomLangue=k=>(D.langues[k]&&D.langues[k].nom)||CATALOGUE[k]||k;
+
+/* ---------- Chemins + encodages (texte ↔ données) ---------- */
+function lire(chemin){ return chemin.split(".").reduce((o,k)=>o==null?o:o[k],D); }
+function ecrire(chemin,val){ const p=chemin.split("."), der=p.pop(); let o=D; for(const k of p){ if(o[k]==null) o[k]={}; o=o[k]; } o[der]=val; }
+const sep=(s,c)=>String(s||"").split(c).map(x=>x.trim());
+const lignes=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
+const CODECS={
+  txt:{enc:v=>v??"",dec:v=>v},
+  int:{enc:v=>v??"",dec:v=>v===""?undefined:parseInt(v,10)},
+  temps:{enc:v=>v==null||v===""?"":formatTemps(v),dec:v=>v.trim()===""?undefined:lireTemps(v)},
+  lignes:{enc:v=>(v||[]).join("\n"),dec:lignes},
+  virgules:{enc:v=>(v||[]).join(", "),dec:v=>sep(v,",").filter(Boolean)},
+  paires:{enc:v=>(v||[]).map(p=>p.gauche+" | "+p.droite).join("\n"),dec:v=>lignes(v).map(l=>{const[a,...b]=sep(l,"|");return{gauche:a,droite:b.join(" | ")};})},
+  duo:{enc:v=>(v||[]).map(p=>p.join(" | ")).join("\n"),dec:v=>lignes(v).map(l=>{const[a,...b]=sep(l,"|");return[a,b.join(" | ")];})},
+  trio:{enc:v=>(v||[]).map(p=>p.join(" | ")).join("\n"),dec:v=>lignes(v).map(l=>{const[a,b,...c]=sep(l,"|");return[a,b||"",c.join(" | ")];})},
+  groupes:{enc:v=>(v||[]).map(g=>g.join(", ")).join("\n"),dec:v=>lignes(v).map(l=>sep(l,",").filter(Boolean))},
+  morceaux:{enc:v=>(v||[]).map(m=>m.nom+" : "+m.choix.join(" ; ")).join("\n"),dec:v=>lignes(v).map(l=>{const i=l.indexOf(":");return{nom:l.slice(0,i).trim(),choix:sep(l.slice(i+1),";").filter(Boolean)};})},
+  lignesBilan:{enc:v=>(v||[]).map(m=>[m.nom,m.consigne||"",m.choix.join(" ; ")].join(" | ")).join("\n"),dec:v=>lignes(v).map(l=>{const[n,c,...ch]=sep(l,"|");return{nom:n,consigne:c||"",choix:sep(ch.join("|"),";").filter(Boolean)};})},
+  st:{enc:v=>(v||[]).map(([a,b,t])=>`${formatTemps(a)} - ${formatTemps(b)} | ${t}`).join("\n"),
+      dec:v=>lignes(v).map(l=>{const m=l.match(/^([\d:.,]+)\s*(?:-|–|→|>)\s*([\d:.,]+)\s*\|?\s*(.*)$/);return m?[lireTemps(m[1]),lireTemps(m[2]),m[3]]:null;}).filter(Boolean)}
+};
+/* Générateurs de champs */
+function champ(chemin,etiquette,{codec="txt",type="input",aide="",ph="",dir=""}={}){
+  const v=CODECS[codec].enc(lire(chemin)), attrs=`data-c="${chemin}" data-k="${codec}" placeholder="${esc(ph)}" ${dir?`dir="${dir}"`:""}`;
+  const ctl= type==="input"?`<input class="c" ${attrs} value="${esc(v)}">`
+          : `<textarea class="c ${type==="grand"?"grand":""}" ${attrs}>${esc(v)}</textarea>`;
+  return `<label class="f">${etiquette}${aide?` <small>${aide}</small>`:""}${ctl}</label>`;
+}
+function champTemps(chemin,etiquette){
+  return `<label class="f">${etiquette}<div class="temps"><input class="c" data-c="${chemin}" data-k="temps" value="${esc(CODECS.temps.enc(lire(chemin)))}" placeholder="0:00">
+    <button type="button" class="chrono" onclick="mettreTemps(this)" title="Prendre la position actuelle de la vidéo">⏱ ici</button></div></label>`;
+}
+document.addEventListener("input",e=>{
+  const el=e.target; if(!el.dataset||!el.dataset.c) return;
+  ecrire(el.dataset.c, CODECS[el.dataset.k||"txt"].dec(el.value));
+  if(el.dataset.c.endsWith(".titre")||el.dataset.c.endsWith(".badge")) majTitresItems();
+  sauverBrouillon();
+});
+function mettreTemps(btn){
+  if(!L) return toast("Charge d’abord une vidéo.");
+  const inp=btn.parentElement.querySelector("input"); inp.value=formatTemps(L.temps()); inp.dispatchEvent(new Event("input",{bubbles:true}));
+}
+
+/* ---------- Rendu des formulaires ---------- */
+let ouverts=new Set(["general","etapes"]);
+function section(id,titre,sous,corps){
+  return `<details class="carte" data-s="${id}" ${ouverts.has(id)?"open":""} ontoggle="this.open?ouverts.add('${id}'):ouverts.delete('${id}')"><summary><span>${titre}<small>${sous}</small></span></summary>${corps}</details>`;
+}
+function rendre(){
+  const ap=languesAppui();
+  let h="";
+  h+=section("general","2. Informations générales","titre, public, objectifs",`
+    ${champ("titre","Titre du parcours",{ph:"Comprendre la déforestation en Amazonie"})}
+    <div class="l2">${champ("discipline","Discipline et niveau",{ph:"Géographie – Seconde"})}${champ("public","Public",{ph:"Élèves allophones Pré-B1/B1"})}</div>
+    ${champ("accroche","Phrase d’accroche (vue par l’élève)",{type:"area"})}
+    ${champ("objectifFinal","Ce que l’élève doit savoir faire à la fin",{type:"area",ph:"À la fin de l’activité, je dois pouvoir : …"})}
+    ${champ("cadrage","Encadrés de cadrage",{codec:"duo",type:"area",aide:"une ligne par encadré : Titre | Texte",ph:"Thème du programme | Sociétés et environnements"})}
+    ${champ("nomFichier","Nom court du parcours",{aide:"lettres, chiffres et tirets ; il sert pour le nom du fichier et le lien",ph:"amazonie"})}`);
+  h+=section("langues","3. Langues d’appui",Object.keys(D.langues).map(nomLangue).join(" · "),`
+    <p class="aide">Le français et le « FR simple » sont toujours proposés. Coche les langues des élèves : des cases de traduction apparaîtront pour les sous-titres, les consignes et le lexique.</p>
+    <div class="langs">${Object.entries(CATALOGUE).map(([k,n])=>`<label><input type="checkbox" ${D.langues[k]?"checked":""} onchange="basculerLangue('${k}',this.checked)">${n}</label>`).join("")}</div>`);
+  const L2=languesTexte(); if(!L2.includes(ongletLangue.st)) ongletLangue.st="fr"; const l=ongletLangue.st, dir=RTL.has(l)?"rtl":"";
+  h+=section("textes","4. Sous-titres et transcription","par langue",`
+    <div class="onglets">${L2.map(k=>`<button class="${k===l?"on":""}" onclick="ongletLangue.st='${k}';rendre()">${esc(nomLangue(k))}</button>`).join("")}</div>
+    ${champ("sousTitres."+l,"Sous-titres — "+esc(nomLangue(l)),{codec:"st",type:"grand",dir,aide:"une ligne par sous-titre : début - fin | texte",ph:"0:00 - 0:18 | Chaque année, plus de 20 000 km² de forêts partent en fumée."})}
+    <button class="btn btn-blanc btn-p" style="margin-top:6px" onclick="ajouterLigneST('${l}')">+ Ajouter une ligne à la position actuelle</button>
+    ${champ("transcription."+l,"Transcription complète — "+esc(nomLangue(l)),{type:"grand",dir,aide:"facultatif ; affichée dans la fenêtre « Transcription complète »"})}`);
+  h+=section("bulles","5. Bulles d’aide sur la vidéo",D.bulles.length+" bulle(s)",`
+    <p class="aide">Une bulle apparaît par-dessus la vidéo pendant un intervalle de temps, pour orienter l’écoute.</p>
+    ${D.bulles.map((b,i)=>`<div class="item"><div class="item-tete"><b>Bulle ${i+1}</b>${outils("bulles",i)}</div>
+      <div class="l2">${champTemps(`bulles.${i}.start`,"Apparaît à")}${champTemps(`bulles.${i}.end`,"Disparaît à")}</div>
+      ${champ(`bulles.${i}.title`,"Titre",{ph:"Écoute le nombre"})}${champ(`bulles.${i}.text`,"Texte",{ph:"Tu vas entendre une surface…"})}${champ(`bulles.${i}.action`,"Bouton",{ph:"Je l’ai repéré."})}</div>`).join("")}
+    <button class="btn btn-bleu btn-p" style="margin-top:10px" onclick="ajouterBulle()">+ Ajouter une bulle à la position actuelle</button>`);
+  h+=section("etapes","6. Étapes de l’activité",D.etapes.length+" étape(s)",`
+    ${D.etapes.map((e,i)=>rendreEtape(e,i,ap)).join("")}
+    <div class="item" style="background:#fff"><b>Ajouter une étape :</b>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${Object.entries(TYPES).map(([k,n])=>`<button class="btn btn-blanc btn-p" onclick="ajouterEtape('${k}')">+ ${n}</button>`).join("")}</div></div>`);
+  h+=section("autoeval","7. Autoévaluation finale",D.autoevaluation.length+" objectif(s)",
+    champ("autoevaluation","Objectifs sur lesquels l’élève se positionne",{codec:"lignes",type:"area",aide:"un objectif par ligne",ph:"Je sais prélever une information chiffrée dans une vidéo."}));
+  const lx=ap.includes(ongletLangue.lex)?ongletLangue.lex:ap[0];
+  h+=section("lexique","8. Lexique disciplinaire",D.lexique.length+" mot(s)",`
+    ${D.lexique.map((m,i)=>`<div class="item"><div class="item-tete"><b>${esc(m.mot||"Mot "+(i+1))}</b>${outils("lexique",i)}</div>
+      <div class="l2">${champ(`lexique.${i}.mot`,"Mot en français")}${champ(`lexique.${i}.categorie`,"Catégorie",{ph:"notion, acteur, lieu…"})}</div>
+      ${champ(`lexique.${i}.definition`,"Définition simple")}
+      ${ap.length?`<div class="l2">${ap.map(k=>champ(`lexique.${i}.traductions.${k}.mot`,esc(nomLangue(k))+" : mot",{dir:RTL.has(k)?"rtl":""})+champ(`lexique.${i}.traductions.${k}.definition`,esc(nomLangue(k))+" : définition",{dir:RTL.has(k)?"rtl":""})).join("")}</div>`:""}</div>`).join("")}
+    <button class="btn btn-bleu btn-p" style="margin-top:10px" onclick="D.lexique.push({mot:'',categorie:'',definition:'',traductions:{}});ouverts.add('lexique');rendre()">+ Ajouter un mot</button>`);
+  h+=section("eclairage","9. Éclairage didactique (enseignant)","facultatif",`
+    ${champ("eclairage.intro","Présentation de la ressource",{type:"area"})}
+    ${champ("eclairage.cartes","Encadrés",{codec:"trio",type:"area",aide:"une ligne : Étiquette | Titre | Texte",ph:"Attention | Vidéo stabilisée | La vidéo reste visible…"})}
+    ${champ("eclairage.paragraphes","Paragraphes",{codec:"duo",type:"area",aide:"une ligne : Titre | Texte",ph:"Intention générale | L’application vise…"})}`);
+  $("formulaires").innerHTML=h;
+  majEtat();
+}
+function outils(liste,i){
+  return `<span style="display:flex;gap:4px"><button class="btn btn-blanc btn-p" onclick="deplacer('${liste}',${i},-1)" title="Monter">↑</button><button class="btn btn-blanc btn-p" onclick="deplacer('${liste}',${i},1)" title="Descendre">↓</button><button class="btn btn-rouge btn-p" onclick="supprimer('${liste}',${i})">Supprimer</button></span>`;
+}
+function rendreEtape(e,i,ap){
+  const p=`etapes.${i}`;
+  let s="";
+  if(e.type==="reponse") s=`<div class="l2">${champ(p+".etiquette","Début de phrase à compléter",{ph:"Chaque année, plus de..."})}${champ(p+".exemple","Texte d’exemple dans la case",{ph:"Écris la surface en km²"})}</div>
+    ${champ(p+".reponsesAcceptees","Réponses acceptées",{codec:"lignes",type:"area",aide:"une par ligne ; il suffit que la réponse de l’élève contienne l’une d’elles (accents et majuscules ignorés)",ph:"20000\n20 000"})}
+    ${champ(p+".pourLaTrace","Phrase reprise dans la trace finale",{aide:"{reponse} sera remplacé par la réponse de l’élève",ph:"J’ai repéré que chaque année, plus de {reponse} de forêt brûlent."})}`;
+  if(e.type==="qcm") s=`${champ(p+".question","Question")}${champ(p+".choix","Propositions",{codec:"lignes",type:"area",aide:"une par ligne"})}
+    <label class="f">Bonne réponse<select class="c" data-c="${p}.bonneReponse" data-k="int">${(e.choix||[]).map((c,j)=>`<option value="${j}" ${e.bonneReponse===j?"selected":""}>${j+1}. ${esc(c)}</option>`).join("")}</select></label>
+    <button class="btn btn-blanc btn-p" style="margin-top:6px" onclick="rendre()">↻ Mettre à jour la liste</button>`;
+  if(e.type==="associer") s=champ(p+".paires","Éléments à relier",{codec:"paires",type:"area",aide:"une ligne par paire : élément | bonne association (les propositions seront mélangées)",ph:"Grands fermiers | Ils brûlent la forêt pour le soja.\nForestiers | Ils cherchent des bois précieux."});
+  if(e.type==="phrase") s=`<div class="l2">${champ(p+".banqueDeMots","Banque de mots",{codec:"virgules",aide:"séparés par des virgules",ph:"forêt, soja, élevage, commerce"})}${champ(p+".motsMinimum","Nombre minimum de mots à choisir",{codec:"int",ph:"3"})}</div>
+    ${champ(p+".modele.morceaux","Menus pour construire la phrase",{codec:"morceaux",type:"area",aide:"une ligne par menu : Nom : choix 1 ; choix 2 ; choix 3",ph:"Cause : la culture du soja ; l’élevage bovin\nAction : on brûle la forêt ; on coupe des arbres"})}
+    ${champ(p+".modele.gabarit","Modèle de phrase",{aide:"reprend les noms des menus entre accolades",ph:"À cause de {Cause}, {Action}."})}
+    <div class="l2">${champ(p+".verification.longueurMinimum","Longueur minimale de la phrase (en mots)",{codec:"int",ph:"7"})}
+    ${champ(p+".verification.doitContenirUnMotDeChaqueGroupe","Mots attendus",{codec:"groupes",type:"area",aide:"une ligne = un groupe ; la phrase doit contenir au moins un mot de chaque groupe (sans accents, un début de mot suffit)",ph:"soja, elevage, bois\nforet, brule, coupe"})}</div>`;
+  if(e.type==="bilan") s=`${champ(p+".lignes","Lignes de choix",{codec:"lignesBilan",type:"grand",aide:"une ligne : Nom | consigne | choix 1 ; choix 2 ; choix 3",ph:"Cause | Je choisis une cause | la culture du soja ; la recherche de bois précieux"})}
+    ${champ(p+".gabarit","Trace rédigée automatiquement",{type:"area",aide:"reprend les noms des lignes entre accolades",ph:"J’ai compris que {Idée}. Dans la vidéo, {Cause}…"})}`;
+  return `<div class="item" data-etape="${i}"><div class="item-tete"><b class="titreEtape">Étape ${i+1} · ${esc(e.badge||"")} <span class="aide">(${TYPES[e.type]})</span></b>${outils("etapes",i)}</div>
+    <div class="l2">${champTemps(p+".debut","Passage utile : début")}${champTemps(p+".fin","Passage utile : fin (la vidéo s’arrête)")}</div>
+    <div class="l3">${champ(p+".badge","Verbe d’action",{ph:"Je repère"})}${champ(p+".titreCourt","Sous-titre de l’onglet",{ph:"Le chiffre important"})}${champ(p+".titre","Titre de l’étape",{ph:"Étape 1 – Je repère…"})}</div>
+    ${champ(p+".sousTitre","Phrase d’introduction")}
+    ${champ(p+".consigne","Consigne",{type:"area"})}
+    ${ap.length?`<div class="l2">${ap.map(k=>champ(`${p}.consigneTraduite.${k}`,"Consigne en "+esc(nomLangue(k)),{type:"area",dir:RTL.has(k)?"rtl":""})).join("")}</div>`:""}
+    <div class="l3">${champ(p+".aide.objectif","Aide : mon objectif",{type:"area"})}${champ(p+".aide.question","Aide : question",{type:"area"})}${champ(p+".aide.indice","Aide : indice",{type:"area"})}</div>
+    <div style="border-top:1px dashed #cbd5e1;margin-top:12px;padding-top:4px"><div class="label" style="margin-top:8px">Activité : ${TYPES[e.type]}</div>${s}</div>
+    ${champ(p+".pourReussir","Pour réussir (conseil)")}
+    <div class="l2">${champ(p+".bravo","Message si c’est réussi",{ph:"Réponse validée : …"})}${champ(p+".encore","Message si ce n’est pas encore réussi",{ph:"Regarde encore…"})}</div></div>`;
+}
+function majTitresItems(){ document.querySelectorAll("[data-etape]").forEach(el=>{const i=+el.dataset.etape,e=D.etapes[i]; el.querySelector(".titreEtape").innerHTML=`Étape ${i+1} · ${esc(e.badge||"")} <span class="aide">(${TYPES[e.type]})</span>`;}); }
+
+/* ---------- Actions sur les listes ---------- */
+const tps=()=>L?Math.round(L.temps()):0;
+function ajouterEtape(type){
+  const n=D.etapes.length+1, prec=D.etapes[n-2], debut=prec&&prec.fin!=null?prec.fin:tps();
+  const e={type,debut,fin:undefined,badge:"",titreCourt:"",titre:`Étape ${n} – `,sousTitre:"",consigne:"",consigneTraduite:{},aide:{objectif:"",question:"",indice:""},pourReussir:"",bravo:"",encore:""};
+  if(type==="reponse") Object.assign(e,{etiquette:"",exemple:"",reponsesAcceptees:[],pourLaTrace:""});
+  if(type==="qcm") Object.assign(e,{question:"",choix:[],bonneReponse:0});
+  if(type==="associer") e.paires=[];
+  if(type==="phrase") Object.assign(e,{banqueDeMots:[],motsMinimum:3,modele:{morceaux:[],gabarit:""},verification:{longueurMinimum:6,doitContenirUnMotDeChaqueGroupe:[]}});
+  if(type==="bilan") Object.assign(e,{lignes:[],gabarit:""});
+  D.etapes.push(e); ouverts.add("etapes"); rendre(); sauverBrouillon();
+  setTimeout(()=>document.querySelector(`[data-etape="${n-1}"]`).scrollIntoView({behavior:"smooth"}),50);
+}
+function ajouterBulle(){ const t=tps(); D.bulles.push({id:"b"+Date.now(),start:t,end:t+8,title:"",text:"",action:"J’ai compris."}); ouverts.add("bulles"); rendre(); sauverBrouillon(); }
+function ajouterLigneST(l){
+  const ta=document.querySelector(`[data-c="sousTitres.${l}"]`), t=tps();
+  ta.value=(ta.value.trim()?ta.value.trim()+"\n":"")+`${formatTemps(t)} - ${formatTemps(t+5)} | `; ta.focus(); ta.dispatchEvent(new Event("input",{bubbles:true}));
+}
+function deplacer(liste,i,d){ const a=D[liste], j=i+d; if(j<0||j>=a.length) return; [a[i],a[j]]=[a[j],a[i]]; rendre(); sauverBrouillon(); }
+function supprimer(liste,i){ if(!confirm("Supprimer cet élément ?")) return; D[liste].splice(i,1); rendre(); sauverBrouillon(); }
+function basculerLangue(k,on){
+  if(on){ D.langues[k]={nom:CATALOGUE[k]}; if(RTL.has(k)) D.langues[k].rtl=true; }
+  else delete D.langues[k];
+  rendre(); sauverBrouillon();
+}
+
+/* ---------- Vidéo ---------- */
+function appliquerVideo(src){
+  if(src===undefined){ src=$("srcVideo").value.trim(); videoLocale=null; D.video=src; sauverBrouillon(); }
+  $("srcVideo").value=D.video||"";
+  const lecture=videoLocale||D.video;
+  if(!lecture){ $("lecteur").innerHTML='<div class="vide">Colle un lien YouTube ou choisis un fichier vidéo pour commencer.</div>'; L=null; return majInfoVideo(); }
+  L=creerLecteur($("lecteur"),lecture,t=>$("compteur").textContent=formatTemps(t));
+  if(L.element) L.element.addEventListener("loadedmetadata",()=>verifier(false)); else setTimeout(()=>verifier(false),4000);
+  majInfoVideo();
+}
+function majInfoVideo(){
+  const v=D.video||"", i=$("videoInfo");
+  if(!v){ i.textContent=""; return; }
+  if(idYouTube(v)) i.innerHTML="✔ Vidéo YouTube : rien d’autre à déposer sur GitHub.";
+  else if(videoLocale) i.innerHTML=`Fichier choisi sur l’ordinateur. <b>Pour la mise en ligne</b>, dépose aussi ce fichier dans le dossier <span class="code">modele/videos/</span> du dépôt (le lien enregistré est <span class="code">${esc(v)}</span>).`;
+  else i.innerHTML=`Lien enregistré : <span class="code">${esc(v)}</span>`;
+}
+function fichierVideo(inp){
+  const f=inp.files[0]; if(!f) return;
+  if(videoLocale) URL.revokeObjectURL(videoLocale);
+  videoLocale=URL.createObjectURL(f); D.video="videos/"+f.name.replace(/\s+/g,"-"); sauverBrouillon(); appliquerVideo(D.video);
+  if(f.size>95e6) toast("Attention : GitHub refuse les fichiers de plus de 100 Mo. Préfère YouTube pour cette vidéo.");
+}
+
+/* ---------- Vérification ---------- */
+function verifier(afficher){
+  const pb=[], dur=L?L.duree():0;
+  if(!D.titre) pb.push("Le parcours n’a pas de titre.");
+  if(!D.video) pb.push("Aucune vidéo n’est indiquée.");
+  if(!D.etapes.length) pb.push("Ajoute au moins une étape.");
+  D.etapes.forEach((e,i)=>{
+    const n=`Étape ${i+1}`;
+    if(e.debut==null||e.fin==null) pb.push(`${n} : le passage utile n’a pas de début ou de fin.`);
+    else if(e.fin<=e.debut) pb.push(`${n} : la fin du passage est avant le début.`);
+    if(dur&&e.fin>dur+1) pb.push(`${n} : la fin (${formatTemps(e.fin)}) dépasse la durée de la vidéo (${formatTemps(dur)}).`);
+    if(!e.consigne) pb.push(`${n} : la consigne est vide.`);
+    if(e.type==="reponse"&&!(e.reponsesAcceptees||[]).length) pb.push(`${n} : aucune réponse acceptée n’est indiquée.`);
+    if(e.type==="qcm"&&(e.choix||[]).length<2) pb.push(`${n} : il faut au moins deux propositions.`);
+    if(e.type==="associer"&&(e.paires||[]).length<2) pb.push(`${n} : il faut au moins deux paires.`);
+    if(e.type==="phrase"&&!(e.banqueDeMots||[]).length) pb.push(`${n} : la banque de mots est vide.`);
+    if(e.type==="bilan"){ if(!(e.lignes||[]).length) pb.push(`${n} : aucune ligne de choix.`);
+      (e.gabarit||"").replace(/\{([^}]+)\}/g,(_,k)=>{ if(!(e.lignes||[]).some(l=>l.nom===k)) pb.push(`${n} : le modèle de trace utilise {${k}}, mais aucune ligne ne porte ce nom.`); }); }
+    if(e.type==="phrase") (e.modele&&e.modele.gabarit||"").replace(/\{([^}]+)\}/g,(_,k)=>{ if(!e.modele.morceaux.some(m=>m.nom===k)) pb.push(`${n} : le modèle de phrase utilise {${k}}, mais aucun menu ne porte ce nom.`); });
+  });
+  if(dur) Object.entries(D.sousTitres).forEach(([k,a])=>{ if((a||[]).some(x=>x[0]>dur)) pb.push(`Sous-titres ${nomLangue(k)} : certaines lignes commencent après la fin de la vidéo.`); });
+  $("verifTxt").innerHTML = pb.length ? `<div class="alerte ko"><b>À vérifier (${pb.length})</b><ul style="margin:6px 0 0;padding-left:18px">${pb.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`
+    : `<div class="alerte ok">✔ Le parcours est complet.</div>`;
+  if(afficher) $("etat").scrollIntoView({behavior:"smooth"});
+  return pb;
+}
+function majEtat(){ $("etatTxt").innerHTML=`<b>${esc(D.titre||"Sans titre")}</b><br>${D.etapes.length} étape(s) · ${D.bulles.length} bulle(s) · ${D.lexique.length} mot(s) de lexique · langues : ${Object.keys(D.langues).map(nomLangue).join(", ")}<br><span class="aide">Brouillon enregistré automatiquement dans ce navigateur.</span>`; }
+
+/* ---------- Brouillon, import, export ---------- */
+let minuteur=null;
+function sauverBrouillon(){ clearTimeout(minuteur); minuteur=setTimeout(()=>{ try{localStorage.setItem(BROUILLON,JSON.stringify(D));}catch(e){} majEtat(); },300); }
+function charger(d){ D=completer(d); videoLocale=null; appliquerVideo(D.video||""); rendre(); sauverBrouillon(); verifier(false); }
+function nouveau(){ if(!confirm("Commencer un nouveau parcours ? Le brouillon actuel sera remplacé (pense à l’enregistrer avant).")) return; charger(vide()); }
+function extraireObjet(txt){
+  const a=txt.indexOf("{"), b=txt.lastIndexOf("}"); if(a<0||b<a) throw new Error("aucun objet trouvé");
+  return JSON.parse(txt.slice(a,b+1));
+}
+function importerTexte(txt){
+  try{ const d=extraireObjet(txt); if(!d.etapes&&!d.titre) throw new Error("ce n’est pas un parcours"); charger(d); fermerModal("modalIA"); toast("Parcours importé. Relis chaque section."); }
+  catch(e){ alert("Impossible de lire ce texte : "+e.message+".\nVérifie que tu as copié toute la réponse, de la première « { » à la dernière « } »."); }
+}
+function ouvrirFichier(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ importerTexte(r.result); if(!D.nomFichier) D.nomFichier=f.name.replace(/\.(js|json)$/,""); rendre(); }; r.readAsText(f); inp.value=""; }
+function chargerExemple(){
+  if(!confirm("Charger l’exemple « Amazonie » ? Le brouillon actuel sera remplacé.")) return;
+  delete window.CONTENU; const s=document.createElement("script"); s.src="parcours/amazonie.js?"+Date.now();
+  s.onload=()=>{ const d=JSON.parse(JSON.stringify(window.CONTENU)); d.nomFichier=d.nomFichier||"amazonie"; charger(d); toast("Exemple chargé."); };
+  s.onerror=()=>alert("Exemple introuvable (le fichier parcours/amazonie.js doit être à côté de l’éditeur).");
+  document.head.appendChild(s);
+}
+const slug=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+function nettoye(){ const c=JSON.parse(JSON.stringify(D)); if(!c.nomFichier) c.nomFichier=slug(c.titre)||"mon-parcours"; return c; }
+function apercu(){
+  const c=nettoye(); if(videoLocale) c.video=videoLocale;
+  try{ localStorage.setItem("parcours:apercu",JSON.stringify(c)); }catch(e){ return alert("Aperçu impossible : le navigateur bloque l’enregistrement local."); }
+  window.open("index.html?apercu=1","_blank");
+}
+function exporter(){
+  const pb=verifier(false);
+  if(pb.length && !confirm(`Il reste ${pb.length} point(s) à vérifier (voir « État du parcours »). Enregistrer quand même ?`)) return;
+  const c=nettoye(); D.nomFichier=c.nomFichier; rendre();
+  const txt=`/* Parcours « ${c.titre.replace(/\*\//g,"")} » — créé avec editeur.html.\n   Pour le modifier : ouvrez editeur.html > « Ouvrir un fichier parcours ». */\nwindow.CONTENU = ${JSON.stringify(c,null,2)};\n`;
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([txt],{type:"text/javascript"})); a.download=c.nomFichier+".js"; a.click();
+  const base=location.href.replace(/editeur\.html.*$/,""), lien=base+"?parcours="+c.nomFichier, enLigne=/^https?:/.test(location.href);
+  const fichierLocal=!idYouTube(c.video)&&/^videos\//.test(c.video);
+  $("exportTxt").innerHTML=`<p>Le fichier <span class="code">${esc(c.nomFichier)}.js</span> a été téléchargé (regarde dans ton dossier Téléchargements).</p>
+    <ol>
+      <li>Sur GitHub, ouvre le dossier <span class="code">modele/parcours/</span> de ton dépôt.</li>
+      <li>Clique sur <b>Add file → Upload files</b>, dépose <span class="code">${esc(c.nomFichier)}.js</span>, puis clique sur <b>Commit changes</b>.</li>
+      ${fichierLocal?`<li>Fais de même avec ta vidéo dans le dossier <span class="code">modele/videos/</span> : le fichier doit s’appeler exactement <span class="code">${esc(c.video.slice(7))}</span>.</li>`:""}
+      <li>Attends une à deux minutes. Le lien à donner aux élèves est :<br><input class="c" readonly value="${esc(lien)}" onclick="this.select()">
+        ${enLigne?"":`<span class="aide">(Tu utilises l’éditeur sur ton ordinateur : remplace le début du lien par l’adresse de ton site GitHub Pages suivie de /modele/.)</span>`}</li>
+    </ol>
+    <p class="aide">Pour modifier ce parcours plus tard : ouvre l’éditeur, clique sur « Ouvrir un fichier parcours » et choisis ce fichier, puis dépose la nouvelle version sur GitHub (elle remplace l’ancienne).</p>`;
+  ouvrirModal("modalExport");
+}
+
+/* ---------- Consigne pour l'IA ---------- */
+function copierPromptIA(){
+  const c=nettoye(); const ap=languesAppui();
+  const p=`Tu es un concepteur pédagogique en FLS/FLSco. À partir de la transcription ci-dessous, rédige un parcours vidéo accompagné pour des élèves allophones.
+Réponds UNIQUEMENT par un objet JSON valide (sans texte autour), qui respecte EXACTEMENT cette structure :
+{
+ "titre","discipline","public","accroche","objectifFinal": textes,
+ "cadrage": [["Titre","Texte"],...],
+ "sousTitres": {"fr":[[debutSec,finSec,"texte"],...],"frs":[...version simplifiée...]${ap.map(k=>`,"${k}":[...]`).join("")}},
+ "transcription": {"fr":"...","frs":"..."${ap.map(k=>`,"${k}":"..."`).join("")}},
+ "bulles": [{"id":"b1","start":sec,"end":sec,"title":"...","text":"...","action":"..."}],
+ "etapes": [ 4 étapes progressives (repérer → comprendre → retenir → expliquer), chacune avec :
+   "type" ("reponse"|"qcm"|"associer"|"phrase"|"bilan"), "debut","fin" (secondes), "badge" ("Je repère"...), "titreCourt", "titre", "sousTitre", "consigne",
+   "consigneTraduite": {${ap.map(k=>`"${k}":"..."`).join(",")}}, "aide": {"objectif","question","indice"}, "pourReussir", "bravo", "encore",
+   plus selon le type :
+   reponse : "etiquette","exemple","reponsesAcceptees":[...],"pourLaTrace" (avec {reponse})
+   qcm : "question","choix":[...],"bonneReponse": index à partir de 0
+   associer : "paires":[{"gauche","droite"}]
+   phrase : "banqueDeMots":[...],"motsMinimum":3,"modele":{"morceaux":[{"nom","choix":[...]}],"gabarit":"... {Nom} ..."},"verification":{"longueurMinimum":7,"doitContenirUnMotDeChaqueGroupe":[[mots sans accents],[...]]}
+   bilan : "lignes":[{"nom","consigne","choix":[...]}],"gabarit":"... {Nom} ..."
+ ],
+ "autoevaluation": ["Je sais ...",...],
+ "lexique": [{"mot","categorie","definition","traductions":{${ap.map(k=>`"${k}":{"mot","definition"}`).join(",")}}}],
+ "eclairage": {"intro","cartes":[["Étiquette","Titre","Texte"]],"paragraphes":[["Titre","Texte"]]}
+}
+Contraintes : vocabulaire élève simple (niveau ${c.public||"A2-B1"}), consignes courtes, objectif disciplinaire maintenu. N'utilise pas de guillemets droits " dans les textes (utilise « »).
+Garde ces valeurs : "titre": ${JSON.stringify(c.titre)}, "discipline": ${JSON.stringify(c.discipline)}, "public": ${JSON.stringify(c.public)}, "video": ${JSON.stringify(c.video)}, "nomFichier": ${JSON.stringify(c.nomFichier)}, "langues": ${JSON.stringify(c.langues)}.
+
+TRANSCRIPTION (avec temps si disponibles) :
+${(c.sousTitres.fr||[]).length?CODECS.st.enc(c.sousTitres.fr):(c.transcription.fr||"[colle ici la transcription de la vidéo]")}`;
+  navigator.clipboard.writeText(p).then(()=>toast("Consigne copiée : colle-la dans l’IA."),()=>{ $("iaRetour").value=p; toast("Copie automatique impossible : la consigne est dans la case, copie-la à la main."); });
+}
+
+/* ---------- Divers ---------- */
+function ouvrirModal(id){$(id).classList.remove("cache");} function fermerModal(id){$(id).classList.add("cache");}
+function toast(m){ const t=document.createElement("div"); t.className="toast"; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),3500); }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.add("cache")); });
+$("srcVideo").addEventListener("keydown",e=>{ if(e.key==="Enter") appliquerVideo(); });
+
+/* Démarrage : reprise du brouillon s'il existe */
+(function(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(BROUILLON)||"null"); }catch(e){}
+  charger(d||vide());
+  if(d&&d.titre) toast("Brouillon « "+d.titre+" » repris.");
+})();
+</script>
+</body>
+</html>

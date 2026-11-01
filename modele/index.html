@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <!-- ============================================================
-     MOTEUR DU PARCOURS — ne pas modifier.
-     Tout le contenu (textes, étapes, sous-titres, lexique…) est
-     dans contenu.js. Voir GUIDE.md.
+     LECTEUR DE PARCOURS — ne pas modifier.
+     Le contenu est chargé depuis parcours/<nom>.js via l’adresse
+     index.html?parcours=<nom>. Créer un parcours : editeur.html
      ============================================================ -->
 <style>
 :root{--bleu:#1d4ed8;--bleu-c:#eff6ff;--vert:#15803d;--vert-c:#ecfdf5;--encre:#0f172a;--gris:#475569;--bord:#dbe3ef;--fond:#f8fafc;--orange:#b45309;--orange-c:#fffbeb}
@@ -56,7 +56,8 @@ section{margin-top:24px}
 .sticky{position:sticky;top:12px}
 @media (max-width:980px){.workspace{grid-template-columns:1fr}.sticky{position:static}}
 .video{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#020617;border:1px solid #cbd5e1}
-.video video{width:100%;height:100%;display:block}
+.lecteur{position:absolute;inset:0}.lecteur video,.lecteur iframe{width:100%;height:100%;display:block;border:0}
+.accueil{max-width:760px;margin:60px auto;padding:0 20px}
 .st{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);width:min(92%,900px);background:rgba(15,23,42,.88);color:#fff;padding:10px 14px;border-radius:14px;font-weight:700;text-align:center;font-size:clamp(.85rem,1.2vw,1.1rem);pointer-events:none}
 .bulle{position:absolute;top:5%;left:4%;width:min(55%,400px);background:rgba(255,255,255,.97);border-left:6px solid #2563eb;border-radius:14px;padding:12px;box-shadow:0 18px 35px -20px rgba(0,0,0,.6)}
 .bulle .x{position:absolute;right:8px;top:4px;background:none;border:0;font-size:1.3rem}
@@ -106,6 +107,18 @@ table.lex td:last-child{border-right:1px solid #e2e8f0;border-radius:0 12px 12px
 </head>
 <body>
 
+<div id="accueil" class="accueil cache">
+  <div class="carte">
+    <div class="label">Parcours vidéo accompagné</div>
+    <h2 id="accueilTitre">Aucun parcours chargé</h2>
+    <p class="muted" id="accueilTxt">Cette page affiche un parcours élève à partir d’une vidéo. Crée ton parcours avec l’éditeur, puis partage son lien.</p>
+    <div class="row" style="margin-top:14px">
+      <a class="btn btn-bleu" href="editeur.html" style="text-decoration:none">Créer un parcours (éditeur)</a>
+      <a class="btn btn-blanc" href="?parcours=amazonie" style="text-decoration:none">Voir l’exemple : déforestation en Amazonie</a>
+    </div>
+  </div>
+</div>
+<div id="appli">
 <header class="hero">
   <div class="wrap">
     <span class="kicker" id="hDiscipline"></span>
@@ -137,7 +150,7 @@ table.lex td:last-child{border-right:1px solid #e2e8f0;border-radius:0 12px 12px
         <div class="label">Vidéo</div>
         <h2>Je regarde le passage utile</h2>
         <div class="video" style="margin-top:10px">
-          <video id="video" controls preload="metadata" playsinline></video>
+          <div id="lecteur" class="lecteur"></div>
           <div id="st" class="st cache"></div>
           <div id="bulle" class="bulle cache" role="status">
             <button class="x" onclick="fermerBulle()" aria-label="Fermer">×</button>
@@ -249,6 +262,7 @@ table.lex td:last-child{border-right:1px solid #e2e8f0;border-radius:0 12px 12px
   </section>
   <p class="muted" style="text-align:center;font-size:.8rem;margin:30px 0">Parcours vidéo accompagné · modèle réutilisable</p>
 </main>
+</div>
 
 <!-- MODALE TRANSCRIPTION -->
 <div class="modal cache" id="modalTrans" onclick="if(event.target===this)fermer(this.id)">
@@ -272,16 +286,13 @@ table.lex td:last-child{border-right:1px solid #e2e8f0;border-radius:0 12px 12px
   </div>
 </div>
 
-<script src="contenu.js"></script>
+<script src="lecteur-video.js"></script>
 <script>
 "use strict";
-const C = window.CONTENU;
+let C, N, CLE, L;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’']/g," ").replace(/\s+/g," ").trim();
-const CLE = "parcours:" + (C.titre || "") + ":" + (C.video || "");
-const N = C.etapes.length;
-const video = $("video");
 
 let etape = 0, valides = new Set(), rep = {};      // rep[i] = réponses de l'étape i
 let stLang = "fr", stVisible = false, bullesOn = true, bulleFermee = null, finPassage = null;
@@ -317,7 +328,7 @@ function initEntete(){
   $("hCadrage").innerHTML = (C.cadrage||[]).map(([t,v])=>`<div><b>${esc(t)}</b>${esc(v)}</div>`).join("");
   $("objectifFinal").textContent = C.objectifFinal || "";
   $("nbEtapes").textContent = N;
-  video.innerHTML = `<source src="${esc(C.video)}">Ton navigateur ne peut pas lire cette vidéo.`;
+  L = creerLecteur($("lecteur"), C.video, majVideo);
   const e = C.eclairage||{};
   $("eclairage").innerHTML = `<p>${esc(e.intro||"")}</p>
     <div class="grid2">${(e.cartes||[]).map(([k,t,x])=>`<div class="soft"><div class="label">${esc(k)}</div><h3>${esc(t)}</h3><p class="muted" style="margin:0">${esc(x)}</p></div>`).join("")}</div>
@@ -479,7 +490,7 @@ function valider(){
 }
 
 /* ---------- Vidéo : passage utile, sous-titres, bulles ---------- */
-function seek(t,play){ try{video.currentTime=t;}catch(e){} if(play) video.play().catch(()=>{}); }
+function seek(t,play){ L.aller(t,play); }
 function voirPassage(){ const s=C.etapes[etape]; finPassage=s.fin; bulleFermee=null; seek(s.debut,true); }
 function rendreLangues(){
   const ls=Object.keys(C.sousTitres||{});
@@ -499,8 +510,7 @@ function choisirTrans(k){
   const t=$("transTxt"); t.textContent=C.transcription[k]; t.dir=langDir(k);
 }
 function fermerBulle(){ const b=$("bulle"); bulleFermee=b.dataset.id; b.classList.add("cache"); }
-function majVideo(){
-  const t=video.currentTime;
+function majVideo(t){
   const lignes=(C.sousTitres||{})[stLang]||[];
   const l=lignes.find(([a,b])=>t>=a&&t<b);
   const st=$("st"); st.classList.toggle("cache", !(stVisible&&l)); if(l){st.textContent=l[2]; st.dir=langDir(stLang);}
@@ -509,10 +519,8 @@ function majVideo(){
   if(bullesOn && p && bulleFermee!==p.id){
     bu.dataset.id=p.id; $("bTitre").textContent=p.title; $("bTexte").textContent=p.text; $("bAction").textContent=p.action||"OK"; bu.classList.remove("cache");
   } else bu.classList.add("cache");
-  if(finPassage!==null && t>=finPassage){ video.pause(); finPassage=null; feedback(true,"Fin du passage utile. Réponds maintenant à la question."); }
+  if(finPassage!==null && t>=finPassage){ L.pause(); finPassage=null; feedback(true,"Fin du passage utile. Réponds maintenant à la question."); }
 }
-video.addEventListener("timeupdate", majVideo);
-video.addEventListener("seeking", majVideo);
 
 /* ---------- Trace finale ---------- */
 function resumeEtape(s, r){
@@ -557,9 +565,36 @@ function fermer(id){ $(id).classList.add("cache"); }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.add("cache")); });
 
 /* ---------- Démarrage ---------- */
-initEntete(); rendreAutoeval(); charger(); rendreLangues(); rendreLexique("fr"); afficherEtape();
-if(valides.size===N) genererTrace();
-document.addEventListener("change", sauver);
+function normaliser(c){
+  c.etapes=c.etapes||[]; c.langues=c.langues||{}; if(!c.langues.fr) c.langues.fr={nom:"Français"};
+  return c;
+}
+function demarrer(c){
+  C=normaliser(c); N=C.etapes.length; CLE="parcours:"+(C.titre||"")+":"+(C.video||"");
+  if(!N){ return accueil("Ce parcours n’a pas encore d’étape", "Ouvre l’éditeur pour ajouter au moins une étape."); }
+  initEntete(); rendreAutoeval(); charger(); rendreLangues(); rendreLexique("fr"); afficherEtape();
+  if(valides.size===N) genererTrace();
+  document.addEventListener("change", sauver);
+}
+function accueil(titre, txt){
+  $("appli").classList.add("cache"); $("accueil").classList.remove("cache");
+  if(titre) $("accueilTitre").textContent=titre; if(txt) $("accueilTxt").textContent=txt;
+}
+(function chargerContenu(){
+  const q=new URLSearchParams(location.search);
+  if(q.has("apercu")){
+    try{ const c=JSON.parse(localStorage.getItem("parcours:apercu")); if(c) return demarrer(c); }catch(e){}
+    return accueil("Aperçu indisponible","Relance l’aperçu depuis l’éditeur.");
+  }
+  if(window.CONTENU) return demarrer(window.CONTENU);       // contenu intégré directement dans la page
+  const nom=q.get("parcours");
+  if(!nom) return accueil();
+  if(!/^[\w-]+$/.test(nom)) return accueil("Nom de parcours invalide");
+  const s=document.createElement("script"); s.src="parcours/"+nom+".js";
+  s.onload=()=> window.CONTENU ? demarrer(window.CONTENU) : accueil("Parcours vide");
+  s.onerror=()=> accueil("Parcours « "+nom+" » introuvable","Vérifie que le fichier parcours/"+nom+".js est bien déposé dans le dépôt.");
+  document.head.appendChild(s);
+})();
 </script>
 </body>
 </html>

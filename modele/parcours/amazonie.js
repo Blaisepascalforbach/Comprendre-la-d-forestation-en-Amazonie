@@ -1,16 +1,11 @@
-/* =====================================================================
-   CONTENU DU PARCOURS — c'est le SEUL fichier à modifier.
-   Pour créer un nouveau parcours : copiez le dossier, remplacez la vidéo,
-   puis réécrivez ce fichier (mode d'emploi complet : GUIDE.md).
-   Règles : gardez les guillemets "…", les virgules entre les éléments,
-   et les temps (debut, fin) en SECONDES.
-   ===================================================================== */
+/* Parcours « Amazonie » (exemple). Généré par editeur.html — pour le modifier :
+   ouvrez editeur.html, puis « Ouvrir un fichier parcours » et choisissez ce fichier. */
 window.CONTENU = {
   "titre": "Comprendre la déforestation en Amazonie",
   "discipline": "Géographie – Seconde générale et technologique",
   "public": "Élèves allophones niveau Pré-B1/B1",
   "accroche": "Je regarde une courte vidéo, je repère les informations importantes, puis j’explique avec mes mots comment des activités humaines exercent des pressions sur la forêt amazonienne.",
-  "video": "video.mp4",
+  "video": "../video.mp4",
   "cadrage": [
     [
       "Thème du programme",
