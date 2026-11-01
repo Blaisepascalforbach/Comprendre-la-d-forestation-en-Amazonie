@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Je comprends une image</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Appli élève générique : fonctionne avec N'IMPORTE QUELLE image (fichier, photo, lien, copier-coller).
+     Aucune préparation par l'enseignant n'est nécessaire. Rien n'est envoyé sur internet : tout reste dans le navigateur. -->
+<style>
+:root{--bleu:#1d4ed8;--bleu-c:#eff6ff;--vert:#15803d;--vert-c:#ecfdf5;--encre:#0f172a;--gris:#475569;--bord:#dbe3ef;--orange-c:#fffbeb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:var(--encre);line-height:1.5}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+header{background:linear-gradient(135deg,#0f172a,#1e3a8a 60%,#166534);color:#fff;padding:26px 0 22px}
+h1{font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:900;margin:6px 0;line-height:1.1}
+header p{color:#dbeafe;margin:0;max-width:820px}
+.kicker{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:3px 12px;border-radius:999px;font-size:.85rem;font-weight:700}
+.btn{border:0;border-radius:12px;padding:9px 16px;font-weight:800;font-size:.92rem;text-decoration:none;display:inline-block}
+.btn-bleu{background:var(--bleu);color:#fff}.btn-vert{background:var(--vert);color:#fff}
+.btn-blanc{background:#fff;color:var(--encre);border:1px solid var(--bord)}
+.btn-clair{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn-p{padding:6px 11px;font-size:.82rem;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.carte{background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 10px 30px -22px rgba(15,23,42,.5);padding:22px}
+.soft{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-top:12px}
+.label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--bleu)}
+h2{font-size:1.45rem;font-weight:900;margin:2px 0 4px}
+h3{font-size:1.02rem;font-weight:900;margin:0 0 6px}
+.muted{color:var(--gris)}
+section{margin-top:22px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cache{display:none!important}
+.c{width:100%;border:2px solid #cbd5e1;border-radius:12px;padding:9px 12px;background:#fff;margin-top:4px}
+.c:focus{border-color:var(--bleu);outline:none}
+textarea.c{min-height:80px;resize:vertical}
+label.f{display:block;margin-top:10px;font-weight:700}
+label.f small{font-weight:500;color:var(--gris)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+/* choix vidéo */
+.choix{max-width:860px;margin:30px auto}
+.source{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.source>div{border:1px solid var(--bord);border-radius:16px;padding:14px;background:#fff}
+/* travail */
+.tabs{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px;margin-top:10px}
+.tab{min-width:170px;text-align:left;border:1px solid var(--bord);background:#fff;border-radius:16px;padding:9px 13px;color:#334155}
+.tab small{display:block;font-weight:700;font-size:.75rem;opacity:.8}.tab strong{display:block}
+.tab.active{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.tab.ok small::after{content:" ✓";color:#16a34a;font-weight:900}.tab.active.ok small::after{color:#bbf7d0}
+.progress{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--bleu),var(--vert));transition:width .4s}
+.workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start}
+.sticky{position:sticky;top:12px}
+@media(max-width:980px){.workspace{grid-template-columns:1fr}.sticky{position:static}}
+.video{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#020617}
+.video video,.video iframe{width:100%;height:100%;border:0;display:block}
+.chrono{background:var(--bleu-c);color:var(--bleu);border:1px solid #bfdbfe;border-radius:8px;padding:5px 8px;font-weight:800;font-size:.8rem;white-space:nowrap}
+.moment{background:#fff;color:var(--bleu);border:1px solid #bfdbfe;border-radius:999px;padding:2px 9px;font-weight:800;font-size:.78rem}
+.chip{border:1px solid var(--bord);background:#fff;border-radius:999px;padding:5px 11px;font-weight:700;font-size:.86rem}
+.chip.on{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.aides{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.aide-txt{background:var(--orange-c);border:1px solid #fde68a;border-radius:12px;padding:12px}
+.ligne-info{display:grid;grid-template-columns:130px 1fr auto;gap:8px;align-items:center;margin-top:8px}
+@media(max-width:560px){.ligne-info{grid-template-columns:1fr}}
+.ligne-info b{font-size:.92rem}
+.mot{border:1px solid #e2e8f0;border-radius:14px;padding:10px 12px;margin-top:8px;background:#fff;display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:start}
+@media(max-width:560px){.mot{grid-template-columns:1fr}}
+.feedback{margin-top:14px;border-radius:14px;padding:12px 14px;font-weight:700}
+.feedback.ok{background:var(--vert-c);border:1px solid #86efac;color:#166534}
+.feedback.ko{background:var(--orange-c);border:1px solid #fcd34d;color:#92400e}
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px}
+.compteur{font-size:1.4rem;font-weight:900;font-variant-numeric:tabular-nums}
+.trace-box{background:var(--vert-c);border:1px solid #86efac;border-radius:14px;padding:14px;font-weight:600;white-space:pre-line}
+.verrou{opacity:.55;pointer-events:none;filter:grayscale(.4)}
+.niveaux{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.niveaux label{border:1px solid var(--bord);border-radius:999px;padding:4px 12px;cursor:pointer;font-weight:700;font-size:.85rem;background:#fff}
+.niveaux input{display:none}
+.niveaux label:has(input:checked){background:var(--bleu-c);border-color:var(--bleu);color:var(--bleu)}
+.amorce{display:block;width:100%;text-align:left;border:1px dashed #93c5fd;background:var(--bleu-c);border-radius:10px;padding:7px 10px;margin-top:6px;font-weight:700;color:#1e3a8a}
+.compte{font-size:.85rem;font-weight:700}
+.compte.ok{color:var(--vert)}
+.image-zone{position:relative;margin-top:8px;border-radius:14px;overflow:hidden;background:#0f172a;text-align:center;user-select:none}
+.image-zone img{max-width:100%;max-height:62vh;display:block;margin:0 auto}
+#reperes{position:absolute;inset:0;pointer-events:none}
+.cadre{position:relative;display:inline-block;vertical-align:top}
+.repere{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;background:#1d4ed8;color:#fff;border:3px solid #fff;font-weight:900;font-size:.8rem;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:auto;padding:0}
+.num{width:28px;height:28px;border-radius:50%;background:#1d4ed8;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;margin-top:6px}
+.flash{outline:3px solid #f59e0b;transition:outline .3s}
+.grille{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);pointer-events:none}
+.grille span{border:1px dashed rgba(255,255,255,.75);display:flex;align-items:flex-start;justify-content:center;padding-top:4px;color:#fff;font-weight:800;font-size:.75rem;text-shadow:0 1px 3px #000}
+.loupe{position:absolute;width:160px;height:160px;border-radius:50%;border:4px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.6);pointer-events:none;background-repeat:no-repeat;z-index:3}
+.btn.on{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+#zoneColler{cursor:pointer}#zoneColler:focus{outline:3px dashed var(--bleu)}
+.reprise{border:1px solid var(--bord);background:#fff;border-radius:14px;padding:8px;width:150px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.reprise img{width:100%;height:80px;object-fit:cover;border-radius:8px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.85);display:flex;align-items:center;justify-content:center;z-index:50}
+@media print{body *{visibility:hidden}#zoneImpression,#zoneImpression *{visibility:visible}#zoneImpression{position:absolute;left:0;top:0;width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="kicker" id="kicker">Je travaille avec une image</span>
+    <h1 id="titrePage">Je comprends une image</h1>
+    <p>Je choisis une image : une photo, une carte, une affiche, un dessin, un tableau, un graphique… L’appli m’aide à la comprendre en 4 étapes : je découvre, je décris, je retiens, j’explique.</p>
+    <div class="row" style="margin-top:14px">
+      <label style="font-weight:700;font-size:.9rem">Aide dans ma langue :
+        <select id="maLangue" class="c" style="width:auto;display:inline-block;margin-left:6px;padding:5px 8px" onchange="changerLangue(this.value)"></select></label>
+      <button class="btn btn-clair btn-p cache" id="btnAutre" onclick="autreImage()">Changer d’image</button>
+      <a class="btn btn-clair btn-p" href="ma-video.html" style="text-decoration:none">Travailler sur une vidéo</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ ÉCRAN 1 : CHOIX DE L'IMAGE ============ -->
+<main class="wrap" id="ecranChoix">
+  <div class="choix carte">
+    <div class="label">Étape 0</div>
+    <h2>Je choisis mon image</h2>
+    <p class="muted">Mon image peut venir de mon ordinateur, de mon téléphone (photo du manuel) ou d’internet.</p>
+    <div class="source">
+      <div><h3>💻 Un fichier ou une photo</h3><label class="btn btn-bleu btn-p" style="cursor:pointer;margin-top:4px">Choisir l’image<input type="file" accept="image/*" class="cache" id="fichier" onchange="choisirFichier(this.files[0])"></label>
+        <p class="muted" style="font-size:.82rem;margin:6px 0 0">Sur téléphone, je peux prendre en photo une page du manuel.</p></div>
+      <div><h3>🔗 Un lien vers une image</h3><input class="c" id="lienImg" placeholder="https://…/image.jpg"><p class="muted" style="font-size:.82rem;margin:6px 0 0">Clic droit sur l’image → « Copier l’adresse de l’image ».</p></div>
+      <div id="zoneColler" tabindex="0"><h3>📋 Coller une image</h3><p class="muted" style="font-size:.88rem;margin:4px 0 0">Je copie une image, je clique ici, puis je fais <b>Ctrl + V</b>.</p></div>
+    </div>
+    <div id="apercuChoix" class="cache" style="margin-top:12px;text-align:center"><img id="miniature" alt="Aperçu de l’image choisie" style="max-height:220px;max-width:100%;border-radius:12px;border:1px solid #e2e8f0"></div>
+    <div class="grid2" style="margin-top:6px">
+      <label class="f">Le titre du document <small>(si je le connais)</small><input class="c" id="titreImg" placeholder="Ex. : Une rue de Lagos"></label>
+      <label class="f">La matière <small>(facultatif)</small><input class="c" id="matiere" placeholder="Ex. : Géographie, Histoire, Arts…"></label>
+    </div>
+    <div class="row" style="margin-top:16px"><button class="btn btn-bleu" onclick="commencer()">Commencer →</button></div>
+    <div id="erreurChoix" class="feedback ko cache"></div>
+    <div id="reprises"></div>
+  </div>
+</main>
+
+<!-- ============ ÉCRAN 2 : LE TRAVAIL ============ -->
+<main class="wrap cache" id="ecranTravail">
+  <section class="carte">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="label">Je travaille en 4 étapes</div><h2 id="titreHaut"></h2></div>
+      <div style="min-width:200px"><b>Progression <span id="progTxt"></span></b><div class="progress"><div id="progBar"></div></div></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </section>
+
+  <section class="workspace">
+    <div class="sticky">
+      <div class="carte">
+        <div class="label">Mon image</div>
+        <div class="row" style="justify-content:space-between"><h2 id="nomImg">J’observe</h2>
+          <div class="row"><button class="btn btn-blanc btn-p" id="btnLoupe" onclick="basculerLoupe()">🔍 Loupe</button>
+          <button class="btn btn-blanc btn-p" onclick="basculerGrille()" id="btnGrille">▦ Zones</button>
+          <button class="btn btn-blanc btn-p" onclick="pleinEcran()">⛶ Grand</button></div></div>
+        <div class="image-zone" id="imageZone">
+          <div class="cadre"><img id="image" alt="Le document étudié">
+          <div class="grille cache" id="grille"><span>en haut à gauche</span><span>en haut</span><span>en haut à droite</span><span>à gauche</span><span>au centre</span><span>à droite</span><span>en bas à gauche</span><span>en bas</span><span>en bas à droite</span></div>
+          <div id="reperes"></div>
+          <div class="loupe cache" id="loupe"></div></div>
+        </div>
+        <p class="muted" id="consignePose" style="font-size:.88rem;margin:8px 0 0"></p>
+        <div class="soft">
+          <h3>Mes aides pour observer</h3>
+          <ul class="muted" style="margin:0;padding-left:18px;font-size:.9rem">
+            <li><b>🔍 Loupe</b> : je passe sur l’image pour voir les détails.</li>
+            <li><b>▦ Zones</b> : je vois les mots pour dire <i>où</i> se trouve un élément (en haut à gauche, au centre…).</li>
+            <li>Aux étapes 2 et 3, je <b>clique sur l’image</b> pour poser un repère numéroté.</li>
+          </ul>
+        </div>
+        <div class="soft"><h3>Mes notes d’observation</h3>
+          <textarea class="c" id="notes" placeholder="J’écris ici ce que je vois, comme je veux." oninput="sauver()"></textarea></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <div class="label">Activité · <span id="badge"></span></div>
+      <h2 id="titreEtape"></h2>
+      <p class="muted" id="introEtape" style="margin:0"></p>
+      <div class="aides">
+        <b style="align-self:center">Besoin d’aide ?</b>
+        <button class="chip" onclick="aide('objectif',this)">Mon objectif</button>
+        <button class="chip" onclick="aide('methode',this)">Comment faire</button>
+        <button class="chip" id="btnTrad" onclick="aide('langue',this)">Dans ma langue</button>
+      </div>
+      <div id="aideTxt" class="aide-txt cache"></div>
+      <div id="corps"></div>
+      <div id="feedback" class="feedback cache" aria-live="polite"></div>
+      <div class="nav">
+        <button class="btn btn-blanc" id="btnPrec" onclick="aller(etape-1)">← Précédent</button>
+        <button class="btn btn-vert" onclick="valider()">Vérifier et valider</button>
+        <button class="btn btn-blanc" id="btnSuiv" onclick="aller(etape+1)">Suivant →</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="carte verrou" id="trace">
+    <div class="label">Trace de travail</div>
+    <h2>Je garde une trace de ce que j’ai compris</h2>
+    <p class="muted" id="traceInfo">Cette partie s’ouvre quand les 4 étapes sont validées.</p>
+    <div class="grid2">
+      <div class="soft">
+        <h3>Mon bilan personnel</h3>
+        <label class="f">Ce que j’ai bien compris<textarea class="c" id="bilan1" oninput="sauver()"></textarea></label>
+        <label class="f">Ce que je dois encore travailler<textarea class="c" id="bilan2" oninput="sauver()"></textarea></label>
+        <label class="f">Les aides qui m’ont été utiles<textarea class="c" id="bilan3" oninput="sauver()"></textarea></label>
+      </div>
+      <div class="soft"><h3>Je m’évalue</h3><div id="autoeval"></div></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn btn-vert" onclick="genererTrace()">Générer ma trace</button>
+      <button class="btn btn-blanc" onclick="copierTrace()">Copier le texte</button>
+      <button class="btn btn-blanc" onclick="genererTrace();print()">Imprimer / PDF (avec l’image)</button>
+      <button class="btn btn-blanc" onclick="telechargerImage()">Télécharger l’image annotée</button>
+    </div>
+    <div id="zoneImpression" style="margin-top:14px">
+      <div id="imageTrace" style="text-align:center;margin-bottom:12px"></div>
+      <div id="traceFinale" class="trace-box">Clique sur « Générer ma trace ».</div>
+    </div>
+  </section>
+  <p class="muted" style="text-align:center;font-size:.8rem;margin:30px 0">Mon travail et mon image sont enregistrés dans ce navigateur. Rien n’est envoyé sur internet.</p>
+</main>
+
+<div class="modal cache" id="modalGrand" onclick="if(event.target===this||event.target.tagName==='IMG')this.classList.add('cache')">
+  <img id="imgGrand" alt="Image en grand" style="max-width:96vw;max-height:94vh;border-radius:8px;cursor:zoom-out">
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const nbMots=s=>String(s||"").trim().split(/\s+/).filter(Boolean).length;
+
+/* ================= Langues ================= */
+const LANGUES={fr:"Français",en:"English",es:"Español",pt:"Português",ar:"العربية",tr:"Türkçe",uk:"Українська",ru:"Русский",ro:"Română",sq:"Shqip",it:"Italiano"};
+const RTL=new Set(["ar"]);
+const TRAD={
+ decouvrir:{
+  en:"Look at the whole image for one minute. Say what kind of document it is (photo, map, poster…), find its title, author, date and source, and say what it is about.",
+  es:"Mira toda la imagen durante un minuto. Di qué tipo de documento es (foto, mapa, cartel…), busca el título, el autor, la fecha y la fuente, y di de qué trata.",
+  pt:"Olha para a imagem inteira durante um minuto. Diz que tipo de documento é (foto, mapa, cartaz…), procura o título, o autor, a data e a fonte, e diz de que fala.",
+  ar:"انظر إلى الصورة كلها لمدة دقيقة. قل ما نوع الوثيقة (صورة، خريطة، ملصق…)، وابحث عن العنوان والمؤلف والتاريخ والمصدر، وقل عمّ تتحدث.",
+  tr:"Resmin tamamına bir dakika bak. Belgenin türünü söyle (fotoğraf, harita, afiş…), başlığını, yazarını, tarihini ve kaynağını bul ve neyle ilgili olduğunu söyle.",
+  uk:"Подивись на все зображення протягом хвилини. Скажи, що це за документ (фото, карта, плакат…), знайди назву, автора, дату й джерело, і скажи, про що він.",
+  ru:"Посмотри на всё изображение в течение минуты. Скажи, что это за документ (фото, карта, плакат…), найди название, автора, дату и источник и скажи, о чём он.",
+  ro:"Privește toată imaginea timp de un minut. Spune ce fel de document este (fotografie, hartă, afiș…), găsește titlul, autorul, data și sursa, și spune despre ce este.",
+  sq:"Shiko të gjithë imazhin për një minutë. Thuaj çfarë lloj dokumenti është (foto, hartë, poster…), gjej titullin, autorin, datën dhe burimin, dhe thuaj për çfarë flet.",
+  it:"Guarda tutta l’immagine per un minuto. Di’ che tipo di documento è (foto, carta, manifesto…), trova il titolo, l’autore, la data e la fonte, e di’ di cosa parla."},
+ decrire:{
+  en:"Describe what you see. Click on the image to put a numbered marker on each important element, then write what it is and where it is (at the top, on the left…). At least 4 markers.",
+  es:"Describe lo que ves. Haz clic en la imagen para poner una marca numerada en cada elemento importante y escribe qué es y dónde está (arriba, a la izquierda…). Al menos 4 marcas.",
+  pt:"Descreve o que vês. Clica na imagem para pôr uma marca numerada em cada elemento importante e escreve o que é e onde está (em cima, à esquerda…). Pelo menos 4 marcas.",
+  ar:"صِف ما تراه. اضغط على الصورة لوضع علامة مرقّمة على كل عنصر مهم، ثم اكتب ما هو وأين يوجد (في الأعلى، على اليسار…). 4 علامات على الأقل.",
+  tr:"Gördüğünü anlat. Her önemli öğeye numaralı bir işaret koymak için resme tıkla, sonra ne olduğunu ve nerede olduğunu yaz (yukarıda, solda…). En az 4 işaret.",
+  uk:"Опиши, що ти бачиш. Натисни на зображення, щоб поставити пронумеровану позначку на кожному важливому елементі, і напиши, що це і де воно (угорі, ліворуч…). Щонайменше 4 позначки.",
+  ru:"Опиши, что ты видишь. Нажми на изображение, чтобы поставить пронумерованную метку на каждый важный элемент, и напиши, что это и где оно (вверху, слева…). Не меньше 4 меток.",
+  ro:"Descrie ce vezi. Apasă pe imagine ca să pui un reper numerotat pe fiecare element important, apoi scrie ce este și unde se află (sus, în stânga…). Cel puțin 4 repere.",
+  sq:"Përshkruaj çfarë sheh. Kliko mbi imazh për të vënë një shenjë me numër mbi çdo element të rëndësishëm, pastaj shkruaj çfarë është dhe ku ndodhet (lart, majtas…). Të paktën 4 shenja.",
+  it:"Descrivi quello che vedi. Clicca sull’immagine per mettere un segno numerato su ogni elemento importante, poi scrivi che cos’è e dove si trova (in alto, a sinistra…). Almeno 4 segni."},
+ retenir:{
+  en:"Choose at least 5 useful words to talk about this image. For each word, write what it means (in French or in your language). You can link it to a marker on the image.",
+  es:"Elige al menos 5 palabras útiles para hablar de esta imagen. Para cada palabra, escribe qué significa (en francés o en tu idioma). Puedes unirla a una marca de la imagen.",
+  pt:"Escolhe pelo menos 5 palavras úteis para falar desta imagem. Para cada palavra, escreve o que significa (em francês ou na tua língua). Podes ligá-la a uma marca da imagem.",
+  ar:"اختر 5 كلمات مفيدة على الأقل للحديث عن هذه الصورة. لكل كلمة، اكتب معناها (بالفرنسية أو بلغتك). يمكنك ربطها بعلامة على الصورة.",
+  tr:"Bu resim hakkında konuşmak için en az 5 yararlı kelime seç. Her kelime için anlamını yaz (Fransızca ya da kendi dilinde). Kelimeyi resimdeki bir işaretle bağlayabilirsin.",
+  uk:"Вибери щонайменше 5 корисних слів, щоб говорити про це зображення. Для кожного слова напиши, що воно означає (французькою або своєю мовою). Можеш пов’язати його з позначкою на зображенні.",
+  ru:"Выбери не меньше 5 полезных слов, чтобы говорить об этом изображении. Для каждого слова напиши, что оно значит (по-французски или на своём языке). Можно связать его с меткой на изображении.",
+  ro:"Alege cel puțin 5 cuvinte utile pentru a vorbi despre această imagine. Pentru fiecare cuvânt, scrie ce înseamnă (în franceză sau în limba ta). Îl poți lega de un reper de pe imagine.",
+  sq:"Zgjidh të paktën 5 fjalë të dobishme për të folur për këtë imazh. Për çdo fjalë, shkruaj çfarë do të thotë (në frëngjisht ose në gjuhën tënde). Mund ta lidhësh me një shenjë në imazh.",
+  it:"Scegli almeno 5 parole utili per parlare di questa immagine. Per ogni parola, scrivi cosa significa (in francese o nella tua lingua). Puoi collegarla a un segno sull’immagine."},
+ expliquer:{
+  en:"Explain the image in French with at least 3 sentences: what it shows, what it means, and why the author made it. Click a sentence starter, then complete it. Use at least 2 words from your list.",
+  es:"Explica la imagen en francés con al menos 3 frases: qué muestra, qué significa y por qué el autor la hizo. Haz clic en un inicio de frase y complétalo. Usa al menos 2 palabras de tu lista.",
+  pt:"Explica a imagem em francês com pelo menos 3 frases: o que mostra, o que significa e porque o autor a fez. Clica num início de frase e completa-o. Usa pelo menos 2 palavras da tua lista.",
+  ar:"اشرح الصورة بالفرنسية في 3 جمل على الأقل: ماذا تُظهر، وماذا تعني، ولماذا صنعها المؤلف. اضغط على بداية جملة ثم أكملها. استعمل كلمتين على الأقل من قائمتك.",
+  tr:"Resmi Fransızca en az 3 cümleyle açıkla: ne gösteriyor, ne anlama geliyor ve yazar onu neden yaptı. Bir cümle başlangıcına tıkla ve tamamla. Listenden en az 2 kelime kullan.",
+  uk:"Поясни зображення французькою щонайменше трьома реченнями: що воно показує, що означає і чому автор його створив. Натисни на початок речення й доповни його. Використай щонайменше 2 слова зі свого списку.",
+  ru:"Объясни изображение по-французски не меньше чем в 3 предложениях: что оно показывает, что означает и зачем автор его создал. Нажми на начало предложения и закончи его. Используй не меньше 2 слов из списка.",
+  ro:"Explică imaginea în franceză în cel puțin 3 propoziții: ce arată, ce înseamnă și de ce a făcut-o autorul. Apasă pe un început de propoziție și completează-l. Folosește cel puțin 2 cuvinte din lista ta.",
+  sq:"Shpjego imazhin në frëngjisht me të paktën 3 fjali: çfarë tregon, çfarë do të thotë dhe pse e bëri autori. Kliko mbi një fillim fjalie dhe plotësoje. Përdor të paktën 2 fjalë nga lista jote.",
+  it:"Spiega l’immagine in francese con almeno 3 frasi: cosa mostra, cosa significa e perché l’autore l’ha fatta. Clicca su un inizio di frase e completalo. Usa almeno 2 parole della tua lista."}
+};
+
+/* ================= Les 4 étapes ================= */
+const NATURES=["une photographie","une carte","un tableau / une peinture","une affiche","un dessin de presse","un graphique","un schéma","une bande dessinée","une page de manuel","autre"];
+const POSITIONS=["au premier plan","au second plan","à l’arrière-plan","en haut","en bas","à gauche","à droite","au centre","en haut à gauche","en haut à droite","en bas à gauche","en bas à droite"];
+const CATEGORIES=["une personne / un acteur","un lieu / un paysage","un objet","une action","une couleur / une forme","un texte / une légende","une notion","autre"];
+const AMORCES=["Ce document est…","Il a été réalisé par… en…","Il montre…","Au premier plan, on voit…","À l’arrière-plan, on voit…","Cela signifie que…","L’auteur veut montrer que…","Ce document est intéressant parce que…"];
+const ETAPES=[
+ {id:"decouvrir",badge:"Je découvre",court:"Le document",titre:"Étape 1 – Je découvre le document",intro:"J’observe toute l’image pendant une minute. Je cherche ce que c’est et d’où il vient.",
+  objectif:"Présenter le document : sa nature, son titre, son auteur, sa date, sa source et son sujet.",
+  methode:"Cherche les informations autour de l’image : la légende, le titre, la signature, la date, la source (souvent écrite en petit en bas)."},
+ {id:"decrire",badge:"Je décris",court:"Ce que je vois",titre:"Étape 2 – Je décris ce que je vois",intro:"Je clique sur l’image pour poser un repère sur chaque élément important, puis je dis ce que c’est et où il se trouve.",
+  objectif:"Décrire précisément l’image : les éléments importants et leur place dans l’image.",
+  methode:"Observe d’abord le premier plan (devant), puis l’arrière-plan (derrière). Utilise la loupe pour les détails et le bouton « Zones » pour dire où se trouve un élément."},
+ {id:"retenir",badge:"Je retiens",court:"Mes mots",titre:"Étape 3 – Je retiens les mots importants",intro:"Je construis mon lexique : les mots utiles pour parler de cette image.",
+  objectif:"Retenir au moins 5 mots importants pour décrire et expliquer l’image.",
+  methode:"Reprends les éléments que tu as repérés à l’étape 2. Si tu ne connais pas un mot, utilise « Traduire » ou demande à ton professeur."},
+ {id:"expliquer",badge:"J’explique",court:"Avec mes mots",titre:"Étape 4 – J’explique le document",intro:"J’écris un petit texte : ce que montre l’image, ce qu’elle signifie et pourquoi l’auteur l’a faite.",
+  objectif:"Expliquer l’image en français, en 3 phrases au moins, avec les mots que j’ai retenus.",
+  methode:"Décris d’abord (« Il montre… »), puis interprète (« Cela signifie que… »). Utilise « parce que » pour justifier avec un élément de l’image."}
+];
+const OBJECTIFS=["Je sais présenter un document (nature, auteur, date, source).","Je sais décrire une image et situer ses éléments.","Je sais retenir et expliquer des mots nouveaux.","Je sais expliquer ce que signifie une image avec mes mots."];
+
+/* ================= État ================= */
+let IMG=null, etape=0, valides=new Set(), R=freshR(), langue="fr", outil=null;
+function freshR(){ return {decouvrir:{},reperes:[],mots:[],texte:"",notes:"",bilan:["","",""],auto:{}}; }
+function cle(){ return "monimage:"+IMG.id; }
+function sauver(){
+  if(!IMG) return; lireEtape();
+  R.notes=$("notes").value; R.bilan=[1,2,3].map(i=>$("bilan"+i).value);
+  document.querySelectorAll("#autoeval input:checked").forEach(r=>R.auto[r.name]=r.value);
+  try{ localStorage.setItem(cle(),JSON.stringify({IMG,etape,valides:[...valides],R,date:Date.now()})); localStorage.setItem("mavideo:langue",langue); }
+  catch(e){ /* image trop lourde pour être gardée : on garde au moins le travail */ try{ localStorage.setItem(cle(),JSON.stringify({IMG:{...IMG,src:IMG.lien||""},etape,valides:[...valides],R,date:Date.now()})); }catch(e2){} }
+}
+function charger(){ try{ const d=JSON.parse(localStorage.getItem(cle())||"null"); if(!d) return false; etape=d.etape||0; valides=new Set(d.valides||[]); R=Object.assign(freshR(),d.R||{}); return true; }catch(e){ return false; } }
+const hash=s=>{ let h=0; for(let i=0;i<s.length;i+=Math.max(1,Math.floor(s.length/4000))) h=(h*31+s.charCodeAt(i))|0; return (h>>>0).toString(36)+s.length.toString(36); };
+
+/* ================= Choix de l'image ================= */
+let choisie=null;   // {src, nom, lien?}
+function reduire(src,cb){   // réduit l'image (max 1600 px) pour l'enregistrer dans le navigateur
+  const im=new Image(); im.onload=()=>{ const k=Math.min(1,1600/Math.max(im.width,im.height)); const c=document.createElement("canvas"); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height); cb(c.toDataURL("image/jpeg",.86)); }; im.onerror=()=>erreur("Ce fichier n’est pas une image lisible."); im.src=src; }
+function choisirFichier(f){ if(!f) return; if(!f.type.startsWith("image/")) return erreur("Ce fichier n’est pas une image.");
+  const r=new FileReader(); r.onload=()=>reduire(r.result,d=>{ choisie={src:d,nom:f.name}; montrerApercu(); if(!$("titreImg").value) $("titreImg").value=f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "); }); r.readAsDataURL(f); }
+function montrerApercu(){ $("miniature").src=choisie.src; $("apercuChoix").classList.remove("cache"); $("erreurChoix").classList.add("cache"); }
+document.addEventListener("paste",e=>{ if(IMG) return; const it=[...(e.clipboardData||{}).items||[]].find(i=>i.type.startsWith("image/")); if(it){ e.preventDefault(); choisirFichier(it.getAsFile()); } });
+function commencer(){
+  const lien=$("lienImg").value.trim();
+  if(lien){ if(!/^https?:\/\//.test(lien)) return erreur("Le lien doit commencer par http:// ou https://"); choisie={src:lien,nom:lien.split("/").pop().split("?")[0],lien}; }
+  if(!choisie) return erreur("Choisis d’abord une image : un fichier, un lien ou une image copiée.");
+  IMG={src:choisie.src,lien:choisie.lien||"",nom:choisie.nom,titre:$("titreImg").value.trim(),matiere:$("matiere").value.trim()};
+  IMG.id=choisie.lien?hash(choisie.lien):hash(choisie.src);
+  ouvrirTravail();
+}
+function erreur(m){ const e=$("erreurChoix"); e.textContent=m; e.classList.remove("cache"); }
+function ouvrirTravail(){
+  etape=0; valides=new Set(); R=freshR(); const repris=charger();
+  $("ecranChoix").classList.add("cache"); $("ecranTravail").classList.remove("cache"); $("btnAutre").classList.remove("cache");
+  $("titrePage").textContent=IMG.titre||"Je comprends une image";
+  $("kicker").textContent=IMG.matiere?IMG.matiere+" – je travaille avec une image":"Je travaille avec une image";
+  $("titreHaut").textContent=IMG.titre||IMG.nom; $("nomImg").textContent=IMG.titre||"J’observe";
+  const im=$("image"); im.onerror=()=>feedback(false,"L’image ne s’affiche pas. Le site d’origine bloque peut-être le lien : enregistre l’image sur ton ordinateur, puis choisis le fichier."); im.src=IMG.src; $("imgGrand").src=IMG.src;
+  $("notes").value=R.notes||""; R.bilan.forEach((v,i)=>$("bilan"+(i+1)).value=v||"");
+  rendreAutoeval(); afficher(); if(valides.size===4) genererTrace();
+  if(IMG.lien) history.replaceState(null,"",location.pathname+"?image="+encodeURIComponent(IMG.lien)+(IMG.titre?"&titre="+encodeURIComponent(IMG.titre):""));
+  if(repris) feedback(true,"Je reprends mon travail là où je l’avais laissé.");
+  scrollTo(0,0);
+}
+function autreImage(){ sauver(); location.href=location.pathname; }
+function listerReprises(){
+  const items=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k.startsWith("monimage:")){ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.IMG&&d.IMG.src) items.push(d);} } }catch(e){}
+  items.sort((a,b)=>b.date-a.date); if(!items.length) return;
+  window._rep=items;
+  $("reprises").innerHTML=`<div class="soft"><h3>Reprendre une image déjà commencée</h3><div class="row" style="gap:12px">${items.slice(0,8).map((d,i)=>`<button class="reprise" onclick="IMG=_rep[${i}].IMG;ouvrirTravail()"><img src="${esc(d.IMG.src)}" alt=""><b>${esc(d.IMG.titre||d.IMG.nom)}</b><span class="muted">${d.valides.length}/4 étapes</span></button>`).join("")}</div></div>`;
+}
+
+/* ================= Outils sur l'image ================= */
+function basculerLoupe(){ outil=outil==="loupe"?null:"loupe"; $("btnLoupe").classList.toggle("on",outil==="loupe"); $("loupe").classList.add("cache"); majConsignePose(); }
+function basculerGrille(){ $("grille").classList.toggle("cache"); $("btnGrille").classList.toggle("on"); }
+function pleinEcran(){ $("modalGrand").classList.remove("cache"); }
+const zone=$("imageZone");
+zone.addEventListener("mousemove",e=>{
+  if(outil!=="loupe") return; const im=$("image"), r=im.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top, l=$("loupe");
+  if(x<0||y<0||x>r.width||y>r.height){ l.classList.add("cache"); return; }
+  const z=2.6; l.classList.remove("cache"); l.style.left=(x-80)+"px"; l.style.top=(y-80)+"px";
+  l.style.backgroundImage=`url("${IMG.src}")`; l.style.backgroundSize=`${r.width*z}px ${r.height*z}px`; l.style.backgroundPosition=`${-(x*z-80)}px ${-(y*z-80)}px`;
+});
+zone.addEventListener("mouseleave",()=>$("loupe").classList.add("cache"));
+const peutPoser=()=>["decrire","retenir"].includes(ETAPES[etape].id)&&outil!=="loupe";
+function majConsignePose(){ $("consignePose").innerHTML= outil==="loupe"?"🔍 Loupe active : clique sur « Loupe » pour l’arrêter et poser des repères."
+  : peutPoser()?"👆 <b>Clique sur l’image</b> pour poser un repère numéroté sur un élément.":"Les repères se posent aux étapes 2 et 3."; zone.style.cursor=outil==="loupe"?"zoom-in":peutPoser()?"crosshair":"default"; }
+function positionAuto(x,y){ const h=y<.34?"en haut":y>.66?"en bas":"", v=x<.34?"à gauche":x>.66?"à droite":""; return h&&v?h+" "+v:h||v||"au centre"; }
+$("image").addEventListener("click",e=>{
+  if(!peutPoser()) return; lireEtape();
+  const r=e.target.getBoundingClientRect(), x=(e.clientX-r.left)/r.width, y=(e.clientY-r.top)/r.height;
+  R.reperes.push({x,y,quoi:"",ou:positionAuto(x,y)});
+  if(ETAPES[etape].id==="decrire"){ afficher(); const t=document.querySelectorAll('#listeReperes [data-r="quoi"]'); t[t.length-1].focus(); }
+  else { rendreReperes(); feedback(true,`Repère ${R.reperes.length} posé. Tu peux maintenant l’associer à un mot.`); afficher(); }
+  sauver();
+});
+function rendreReperes(){ $("reperes").innerHTML=R.reperes.map((p,i)=>`<button class="repere" style="left:${p.x*100}%;top:${p.y*100}%" title="${esc(p.quoi||"Repère "+(i+1))}" onclick="surligner(${i})">${i+1}</button>`).join(""); }
+function surligner(i){ const el=document.querySelector(`[data-ri="${i}"]`); if(el){ el.scrollIntoView({behavior:"smooth",block:"center"}); el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"),1200); } }
+
+/* ================= Étapes ================= */
+function onglets(){
+  $("tabs").innerHTML=ETAPES.map((s,i)=>`<button class="tab ${i===etape?"active":""} ${valides.has(i)?"ok":""}" onclick="aller(${i})"><small>Étape ${i+1}</small><strong>${s.badge}</strong><small>${s.court}</small></button>`).join("");
+  $("progTxt").textContent=`${valides.size} / 4`; $("progBar").style.width=(25*valides.size)+"%";
+  const fini=valides.size===4; $("trace").classList.toggle("verrou",!fini);
+  $("traceInfo").textContent=fini?"Toutes les étapes sont validées. Je complète mon bilan, puis je génère ma trace.":"Cette partie s’ouvre quand les 4 étapes sont validées.";
+}
+function aller(i){ if(i<0||i>3) return; lireEtape(); etape=i; afficher(); sauver(); }
+function afficher(){
+  const s=ETAPES[etape];
+  $("badge").textContent=s.badge; $("titreEtape").textContent=s.titre; $("introEtape").textContent=s.intro;
+  $("aideTxt").classList.add("cache"); $("aideTxt").dataset.t=""; document.querySelectorAll(".aides .chip").forEach(b=>b.classList.remove("on"));
+  $("btnTrad").classList.toggle("cache",langue==="fr"); $("feedback").classList.add("cache");
+  $("btnPrec").disabled=etape===0; $("btnSuiv").disabled=etape===3;
+  $("corps").innerHTML=RENDUS[s.id](); rendreReperes(); majConsignePose();
+  if(s.id==="expliquer") majCompte();
+  if(valides.has(etape)) feedback(true,"Étape déjà validée. Je peux encore modifier ma réponse.");
+  onglets();
+}
+function aide(t,btn){
+  const box=$("aideTxt"), s=ETAPES[etape];
+  document.querySelectorAll(".aides .chip").forEach(b=>b.classList.toggle("on",b===btn&&box.dataset.t!==t));
+  if(box.dataset.t===t){ box.classList.add("cache"); box.dataset.t=""; return; }
+  box.dir="ltr";
+  if(t==="objectif") box.innerHTML="<b>Mon objectif :</b> "+esc(s.objectif);
+  if(t==="methode") box.innerHTML="<b>Comment faire :</b> "+esc(s.methode)+'<div class="muted" style="font-size:.85rem;margin-top:4px">Essaie d’abord seul, puis utilise les aides si tu bloques.</div>';
+  if(t==="langue"){ box.textContent=TRAD[s.id][langue]||""; box.dir=RTL.has(langue)?"rtl":"ltr"; }
+  box.dataset.t=t; box.classList.remove("cache");
+}
+function changerLangue(l){ langue=l; try{localStorage.setItem("mavideo:langue",l);}catch(e){} if(IMG) afficher(); }
+
+const optReperes=sel=>`<option value="">—</option>`+R.reperes.map((p,i)=>`<option value="${i}" ${String(sel)===String(i)?"selected":""}>${i+1}${p.quoi?" · "+esc(p.quoi.slice(0,30)):""}</option>`).join("");
+const RENDUS={
+ decouvrir(){ const r=R.decouvrir;
+  return `<div class="soft"><h3>1. C’est quel type de document ?</h3><div class="row">${NATURES.map(t=>`<label class="chip ${r.nature===t?"on":""}" style="cursor:pointer"><input type="radio" name="nature" value="${esc(t)}" class="cache" ${r.nature===t?"checked":""} onchange="document.querySelectorAll('[name=nature]').forEach(x=>x.parentElement.classList.toggle('on',x.checked));sauver()">${esc(t)}</label>`).join("")}</div></div>
+   <div class="soft"><h3>2. Je présente le document</h3><p class="muted" style="margin:0;font-size:.88rem">Je cherche dans la légende, le titre, la signature. Si je ne trouve pas, j’écris « je ne sais pas ».</p>
+    <div class="grid2"><label class="f">Titre ou légende<input class="c" id="d_titre" value="${esc(r.titre||"")}"></label><label class="f">Auteur<input class="c" id="d_auteur" value="${esc(r.auteur||"")}"></label>
+    <label class="f">Date<input class="c" id="d_date" value="${esc(r.date||"")}"></label><label class="f">Source <small>(livre, site, musée…)</small><input class="c" id="d_source" value="${esc(r.source||"")}"></label></div></div>
+   <div class="soft"><h3>3. De quoi parle le document ?</h3>
+    <label class="f">Le sujet, en quelques mots<input class="c" id="d_sujet" value="${esc(r.sujet||"")}" placeholder="Ce document parle de…"></label>
+    <label class="f">Ma première impression <small>(une phrase, même simple)</small><textarea class="c" id="d_phrase" placeholder="Quand je regarde cette image, je vois / je ressens…">${esc(r.phrase||"")}</textarea></label></div>`; },
+ decrire(){
+  return `<div class="soft"><h3>Mes repères <small class="muted">(au moins 4)</small></h3>
+   <p class="muted" style="margin:0;font-size:.88rem">👆 Je clique sur l’image pour ajouter un repère. Pour chaque repère, je dis <b>ce que c’est</b> et <b>où</b> il se trouve.</p>
+   <div id="listeReperes">${R.reperes.length?R.reperes.map((p,i)=>`<div class="mot" data-ri="${i}" style="grid-template-columns:auto 1fr 1fr auto">
+     <span class="num">${i+1}</span>
+     <input class="c" data-r="quoi" value="${esc(p.quoi||"")}" placeholder="Ce que je vois : une femme, une route…" style="margin:0">
+     <select class="c" data-r="ou" style="margin:0">${POSITIONS.map(o=>`<option ${p.ou===o?"selected":""}>${o}</option>`).join("")}</select>
+     <button class="btn btn-blanc btn-p" style="color:#b91c1c" onclick="supprimerRepere(${i})">✕</button></div>`).join(""):'<p class="muted" style="margin-top:12px">Aucun repère pour l’instant : clique sur l’image.</p>'}</div></div>
+   <div class="soft"><h3>Ce qui attire mon regard en premier</h3><textarea class="c" id="r_regard" placeholder="Ce que je remarque d’abord, c’est… parce que…">${esc(R.decouvrir.regard||"")}</textarea></div>`; },
+ retenir(){
+  return `<div class="soft"><h3>Mon lexique <small class="muted">(au moins 5 mots)</small></h3>
+   <div id="listeMots">${R.mots.map((m,i)=>`<div class="mot" data-i="${i}">
+    <div><input class="c" data-m="mot" value="${esc(m.mot||"")}" placeholder="Le mot en français" style="margin:0;font-weight:800">
+      <select class="c" data-m="cat">${["",...CATEGORIES].map(c=>`<option ${m.cat===c?"selected":""} value="${esc(c)}">${c||"C’est…"}</option>`).join("")}</select></div>
+    <div><textarea class="c" data-m="sens" placeholder="Ce que ça veut dire (en français ou dans ma langue)" style="margin:0;min-height:72px" dir="auto">${esc(m.sens||"")}</textarea></div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+      <label class="muted" style="font-size:.78rem;font-weight:700">Repère n°<select class="c" data-m="rep" style="width:auto;padding:3px 6px;margin:0">${optReperes(m.rep)}</select></label>
+      <button class="btn btn-blanc btn-p" onclick="traduire(${i})">Traduire ↗</button>
+      <button class="btn btn-blanc btn-p" style="color:#b91c1c" onclick="supprimerMot(${i})">Supprimer</button></div></div>`).join("")}</div>
+   <div class="row" style="margin-top:10px"><button class="btn btn-bleu btn-p" onclick="ajouterMot()">+ Ajouter un mot</button>
+   ${R.reperes.some(p=>p.quoi&&!R.mots.some(m=>norm(m.mot)===norm(p.quoi)))?`<button class="btn btn-blanc btn-p" onclick="reprendreReperes()">↺ Reprendre mes repères de l’étape 2</button>`:""}</div></div>`; },
+ expliquer(){
+  return `<div class="grid2" style="margin-top:12px">
+    <div class="soft" style="margin:0"><h3>Des débuts de phrase</h3><p class="muted" style="margin:0;font-size:.88rem">Je clique pour l’ajouter à mon texte.</p>${AMORCES.map(a=>`<button class="amorce" onclick="inserer('\\n${esc(a.replace("…","")).replace(/'/g,"\\'")} ')">${esc(a)}</button>`).join("")}</div>
+    <div class="soft" style="margin:0"><h3>Mes mots</h3>
+     <div class="row" style="margin-top:6px">${R.mots.filter(m=>m.mot).map(m=>`<button class="chip" onclick="inserer('${esc(m.mot).replace(/'/g,"\\'")} ')">${esc(m.mot)}</button>`).join("")||'<span class="muted">Ajoute des mots à l’étape 3.</span>'}</div>
+     ${R.reperes.some(p=>p.quoi)?`<h3 style="margin-top:12px">Mes repères</h3><ul style="margin:0;padding-left:18px;font-size:.9rem">${R.reperes.filter(p=>p.quoi).map(p=>`<li>${esc(p.ou)} : ${esc(p.quoi)}</li>`).join("")}</ul>`:""}</div></div>
+   <div class="soft"><h3>Mon explication</h3><textarea class="c" id="e_texte" style="min-height:170px" oninput="majCompte()" placeholder="Ce document est…">${esc(R.texte||"")}</textarea>
+    <div style="margin-top:6px"><span id="compte" class="compte"></span></div></div>`; }
+};
+
+/* ================= Réponses ================= */
+function lireEtape(){
+  const id=ETAPES[etape].id, v=x=>{const e=$(x);return e?e.value:undefined;};
+  if(id==="decouvrir"&&$("d_sujet")){ const c=document.querySelector("[name=nature]:checked");
+    Object.assign(R.decouvrir,{nature:c?c.value:R.decouvrir.nature,titre:v("d_titre"),auteur:v("d_auteur"),date:v("d_date"),source:v("d_source"),sujet:v("d_sujet"),phrase:v("d_phrase")}); }
+  if(id==="decrire"){ document.querySelectorAll("#listeReperes [data-ri]").forEach(el=>{ const p=R.reperes[+el.dataset.ri]; el.querySelectorAll("[data-r]").forEach(f=>p[f.dataset.r]=f.value); }); if($("r_regard")) R.decouvrir.regard=$("r_regard").value; }
+  if(id==="retenir") document.querySelectorAll("#listeMots .mot").forEach(el=>{ const m=R.mots[+el.dataset.i]; el.querySelectorAll("[data-m]").forEach(f=>m[f.dataset.m]=f.value); });
+  if(id==="expliquer"&&$("e_texte")) R.texte=$("e_texte").value;
+}
+document.addEventListener("input",e=>{ if(e.target.closest("#corps")){ if(e.target.dataset.r==="quoi"){ lireEtape(); rendreReperes(); } clearTimeout(window._s); window._s=setTimeout(sauver,400); } });
+document.addEventListener("change",e=>{ if(e.target.closest("#corps")) sauver(); });
+function supprimerRepere(i){ lireEtape(); R.reperes.splice(i,1); R.mots.forEach(m=>{ if(m.rep!==""&&m.rep!=null){ const n=+m.rep; m.rep=n===i?"":n>i?String(n-1):m.rep; } }); afficher(); sauver(); }
+function ajouterMot(){ lireEtape(); R.mots.push({mot:"",sens:"",cat:"",rep:""}); afficher(); const all=document.querySelectorAll('#listeMots [data-m="mot"]'); all[all.length-1].focus(); sauver(); }
+function reprendreReperes(){ lireEtape(); R.reperes.forEach((p,i)=>{ if(p.quoi&&!R.mots.some(m=>norm(m.mot)===norm(p.quoi))) R.mots.push({mot:p.quoi,sens:"",cat:"",rep:String(i)}); }); afficher(); sauver(); }
+function supprimerMot(i){ lireEtape(); R.mots.splice(i,1); afficher(); sauver(); }
+function traduire(i){ lireEtape(); const m=R.mots[i]; if(!m.mot) return feedback(false,"Écris d’abord le mot."); const tl=langue==="fr"?"en":langue;
+  window.open(`https://translate.google.com/?sl=fr&tl=${tl}&text=${encodeURIComponent(m.mot)}&op=translate`,"_blank","noopener"); }
+function inserer(txt){ const ta=$("e_texte"); const d=ta.selectionStart??ta.value.length; const v=ta.value; if(txt.startsWith("\n")&&(d===0||v.trim()==="")) txt=txt.slice(1);
+  ta.value=v.slice(0,d)+txt+v.slice(ta.selectionEnd??d); ta.focus(); ta.selectionStart=ta.selectionEnd=d+txt.length; majCompte(); sauver(); }
+function motsUtilises(){ const t=" "+norm(R.texte||"")+" "; return R.mots.filter(m=>m.mot&&t.includes(norm(m.mot.trim()))); }
+const nbPhrases=s=>String(s||"").split(/[.!?\n]+/).filter(p=>nbMots(p)>=3).length;
+function majCompte(){ if(!$("e_texte")) return; R.texte=$("e_texte").value; const n=nbMots(R.texte), p=nbPhrases(R.texte), u=motsUtilises().length;
+  $("compte").innerHTML=`<span class="${p>=3?"compte ok":""}">${p>=3?"✔":"•"} ${p} phrase(s) sur 3</span> · <span class="${u>=2?"compte ok":""}">${u>=2?"✔":"•"} ${u} mot(s) de mon lexique sur 2</span> · <span class="${n>=25?"compte ok":""}">${n>=25?"✔":"•"} ${n} mots sur 25</span>`; }
+
+/* ================= Vérification ================= */
+function feedback(ok,m){ const f=$("feedback"); f.className="feedback "+(ok?"ok":"ko"); f.textContent=m; }
+function valider(){
+  lireEtape(); const id=ETAPES[etape].id; let ok=false, msg="";
+  if(id==="decouvrir"){ const r=R.decouvrir, pres=["titre","auteur","date","source"].filter(k=>nbMots(r[k])>=1).length;
+    const manque=[!r.nature&&"le type de document",pres<2&&"au moins 2 informations de présentation (titre, auteur, date ou source)",!r.sujet&&"le sujet",nbMots(r.phrase)<4&&"une phrase (au moins 4 mots)"].filter(Boolean);
+    ok=!manque.length; msg=ok?"Bravo : tu as bien présenté le document.":"Il manque encore : "+manque.join(", ")+"."; }
+  if(id==="decrire"){ const n=R.reperes.filter(p=>nbMots(p.quoi)>=1).length; ok=n>=4;
+    msg=ok?`Bravo : tu as décrit ${n} éléments de l’image et tu as dit où ils se trouvent.`:`Tu as décrit ${n} élément(s). Il en faut au moins 4 : clique sur l’image, puis écris ce que tu vois.`; }
+  if(id==="retenir"){ const c=R.mots.filter(m=>m.mot&&m.sens).length; ok=c>=5;
+    msg=ok?`Bravo : ton lexique contient ${c} mots avec leur sens.`:`Tu as ${c} mot(s) avec leur sens. Il en faut au moins 5 : pour chaque mot, écris aussi ce qu’il veut dire.`; }
+  if(id==="expliquer"){ const p=nbPhrases(R.texte), u=motsUtilises().length, n=nbMots(R.texte); ok=p>=3&&u>=2&&n>=25;
+    msg=ok?"Bravo : ton explication est complète. Tu peux maintenant faire ta trace de travail.":"Ton texte doit avoir au moins 3 phrases, 25 mots et utiliser 2 mots de ton lexique. Regarde le compteur sous ton texte."; }
+  if(ok) valides.add(etape); else valides.delete(etape);
+  feedback(ok,msg+(ok&&etape<3?" Tu peux passer à l’étape suivante.":"")); onglets(); sauver();
+  if(ok&&valides.size===4){ genererTrace(); setTimeout(()=>$("trace").scrollIntoView({behavior:"smooth"}),600); }
+}
+
+/* ================= Trace ================= */
+function rendreAutoeval(){ $("autoeval").innerHTML=OBJECTIFS.map((o,i)=>`<div style="margin-bottom:10px"><b>${esc(o)}</b><div class="niveaux">${["À retravailler","En cours","Réussi"].map(n=>`<label><input type="radio" name="ae${i}" value="${n}" ${R.auto["ae"+i]===n?"checked":""} onchange="sauver()"><span>${n}</span></label>`).join("")}</div></div>`).join(""); }
+function imageAnnotee(cb){
+  const im=new Image(); im.crossOrigin="anonymous";
+  im.onload=()=>{ try{ const c=document.createElement("canvas"); c.width=im.naturalWidth; c.height=im.naturalHeight; const g=c.getContext("2d"); g.drawImage(im,0,0);
+    const r=Math.max(14,Math.round(Math.min(c.width,c.height)/38));
+    R.reperes.forEach((p,i)=>{ const x=p.x*c.width,y=p.y*c.height; g.beginPath(); g.arc(x,y,r,0,7); g.fillStyle="#1d4ed8"; g.fill(); g.lineWidth=r/5; g.strokeStyle="#fff"; g.stroke();
+      g.fillStyle="#fff"; g.font=`900 ${Math.round(r*1.1)}px Inter,sans-serif`; g.textAlign="center"; g.textBaseline="middle"; g.fillText(String(i+1),x,y+1); });
+    cb(c.toDataURL("image/jpeg",.9)); }catch(e){ cb(null); } };
+  im.onerror=()=>cb(null); im.src=IMG.src;
+}
+function genererTrace(){
+  lireEtape(); const d=R.decouvrir;
+  const pres=[d.titre&&`Titre : ${d.titre}`,d.auteur&&`Auteur : ${d.auteur}`,d.date&&`Date : ${d.date}`,d.source&&`Source : ${d.source}`].filter(Boolean).join(" · ");
+  const T=[`${IMG.titre||"Mon image"}${IMG.matiere?" – "+IMG.matiere:""}`, "",
+    "1. Je découvre", `C’est ${d.nature||"…"}.${pres?" "+pres+".":""}`, `Sujet : ${d.sujet||"…"}.`, d.phrase?`Ma première impression : ${d.phrase}`:"", "",
+    "2. Je décris", ...R.reperes.filter(p=>p.quoi).map(p=>`(${R.reperes.indexOf(p)+1}) ${p.ou[0].toUpperCase()+p.ou.slice(1)} : ${p.quoi}`), d.regard?`Ce qui attire mon regard : ${d.regard}`:"", "",
+    "3. Je retiens – mon lexique", ...R.mots.filter(m=>m.mot).map(m=>`• ${m.mot}${m.cat?" ("+m.cat+")":""} : ${m.sens||"…"}${m.rep!==""&&m.rep!=null?" → repère "+(+m.rep+1):""}`), "",
+    "4. J’explique", R.texte||"…", "",
+    "Mon bilan", `Ce que j’ai bien compris : ${$("bilan1").value||"…"}`, `Ce que je dois encore travailler : ${$("bilan2").value||"…"}`, `Les aides utiles : ${$("bilan3").value||"…"}`, "",
+    "Je m’évalue", ...OBJECTIFS.map((o,i)=>{const c=document.querySelector(`input[name=ae${i}]:checked`);return `– ${o} → ${c?c.value:"non renseigné"}`;})];
+  $("traceFinale").textContent=T.join("\n").replace(/\n{3,}/g,"\n\n");
+  imageAnnotee(u=>{ $("imageTrace").innerHTML=u?`<img src="${u}" alt="Mon image annotée" style="max-width:100%;max-height:520px;border-radius:12px;border:1px solid #e2e8f0">`
+    :`<div style="position:relative;display:inline-block"><img src="${esc(IMG.src)}" alt="" style="max-width:100%;max-height:520px;border-radius:12px">${R.reperes.map((p,i)=>`<span class="repere" style="left:${p.x*100}%;top:${p.y*100}%">${i+1}</span>`).join("")}</div>`; });
+  sauver();
+}
+function copierTrace(){ genererTrace(); navigator.clipboard&&navigator.clipboard.writeText($("traceFinale").textContent).then(()=>{ const t=$("traceInfo"),o=t.textContent; t.textContent="✔ Texte copié."; setTimeout(()=>t.textContent=o,2500); },()=>{}); }
+function telechargerImage(){ imageAnnotee(u=>{ if(!u) return alert("Le site d’origine de l’image empêche de la télécharger. Choisis l’image comme fichier pour pouvoir le faire.");
+  const a=document.createElement("a"); a.href=u; a.download="mon-image-annotee.jpg"; a.click(); }); }
+
+/* ================= Démarrage ================= */
+(function(){
+  try{ langue=localStorage.getItem("mavideo:langue")||"fr"; }catch(e){}
+  $("maLangue").innerHTML=Object.entries(LANGUES).map(([k,n])=>`<option value="${k}" ${k===langue?"selected":""}>${n}</option>`).join("");
+  $("zoneColler").addEventListener("click",()=>$("zoneColler").focus());
+  const q=new URLSearchParams(location.search), l=q.get("image");
+  if(l){ $("lienImg").value=l; $("titreImg").value=q.get("titre")||""; $("matiere").value=q.get("matiere")||""; commencer(); }
+  else listerReprises();
+})();
+window.addEventListener("beforeunload",()=>{ if(IMG) sauver(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") $("modalGrand").classList.add("cache"); });
+</script>
+</body>
+</html>
