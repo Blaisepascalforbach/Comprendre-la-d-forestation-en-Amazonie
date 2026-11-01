@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcours vidéo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<!-- ============================================================
+     MOTEUR DU PARCOURS — ne pas modifier.
+     Tout le contenu (textes, étapes, sous-titres, lexique…) est
+     dans contenu.js. Voir GUIDE.md.
+     ============================================================ -->
+<style>
+:root{--bleu:#1d4ed8;--bleu-c:#eff6ff;--vert:#15803d;--vert-c:#ecfdf5;--encre:#0f172a;--gris:#475569;--bord:#dbe3ef;--fond:#f8fafc;--orange:#b45309;--orange-c:#fffbeb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--fond);color:var(--encre);line-height:1.5}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+header.hero{background:linear-gradient(135deg,#0f172a,#1e3a8a 60%,#166534);color:#fff;padding:32px 0 28px}
+.kicker{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:4px 12px;border-radius:999px;font-size:.85rem;font-weight:700}
+h1{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin:14px 0 8px;line-height:1.1}
+.hero p{max-width:820px;color:#dbeafe;font-size:1.05rem;margin:0}
+.cadrage{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:20px}
+.cadrage div{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 14px}
+.cadrage b{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#bfdbfe}
+.btn{border:0;border-radius:12px;padding:9px 16px;font-weight:800;font-size:.92rem}
+.btn-bleu{background:var(--bleu);color:#fff}.btn-bleu:hover{background:#1e40af}
+.btn-vert{background:var(--vert);color:#fff}.btn-vert:hover{background:#166534}
+.btn-blanc{background:#fff;color:var(--encre);border:1px solid var(--bord)}.btn-blanc:hover{background:#f1f5f9}
+.btn-clair{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn-petit{padding:6px 11px;font-size:.82rem;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.carte{background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 10px 30px -22px rgba(15,23,42,.5);padding:22px}
+.soft{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px}
+.label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--bleu)}
+h2{font-size:1.5rem;font-weight:900;margin:2px 0 4px}
+h3{font-size:1.05rem;font-weight:900;margin:0 0 6px}
+.muted{color:var(--gris)}
+section{margin-top:24px}
+/* étapes */
+.tabs{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px}
+.tab{min-width:190px;text-align:left;border:1px solid var(--bord);background:#fff;border-radius:16px;padding:10px 14px;color:#334155}
+.tab small{display:block;font-weight:700;font-size:.75rem;opacity:.8}
+.tab strong{display:block}
+.tab.active{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.tab.ok{border-color:#86efac}.tab.ok small::after{content:" ✓";color:#16a34a;font-weight:900}
+.tab.active.ok small::after{color:#bbf7d0}
+.progress{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--bleu),var(--vert));transition:width .4s}
+/* espace de travail */
+.workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start}
+.sticky{position:sticky;top:12px}
+@media (max-width:980px){.workspace{grid-template-columns:1fr}.sticky{position:static}}
+.video{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#020617;border:1px solid #cbd5e1}
+.video video{width:100%;height:100%;display:block}
+.st{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);width:min(92%,900px);background:rgba(15,23,42,.88);color:#fff;padding:10px 14px;border-radius:14px;font-weight:700;text-align:center;font-size:clamp(.85rem,1.2vw,1.1rem);pointer-events:none}
+.bulle{position:absolute;top:5%;left:4%;width:min(55%,400px);background:rgba(255,255,255,.97);border-left:6px solid #2563eb;border-radius:14px;padding:12px;box-shadow:0 18px 35px -20px rgba(0,0,0,.6)}
+.bulle .x{position:absolute;right:8px;top:4px;background:none;border:0;font-size:1.3rem}
+.cache{display:none!important}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--bord);background:#fff;border-radius:999px;padding:6px 12px;font-weight:700;font-size:.88rem}
+.chip.on{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.lang.on{background:var(--encre);color:#fff;border-color:var(--encre)}
+.aides{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.aide-txt{background:var(--orange-c);border:1px solid #fde68a;border-radius:12px;padding:12px;margin-bottom:12px}
+.trad{margin-top:10px;background:#fff;border:1px dashed #93c5fd;border-radius:12px;padding:10px}
+.champ,select.champ,textarea.champ{width:100%;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#fff}
+.champ:focus{border-color:var(--bleu);outline:none}
+textarea.champ{min-height:90px;resize:vertical}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.feedback{margin-top:14px;border-radius:14px;padding:12px 14px;font-weight:700}
+.feedback.ok{background:var(--vert-c);border:1px solid #86efac;color:#166534}
+.feedback.ko{background:var(--orange-c);border:1px solid #fcd34d;color:#92400e}
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px}
+.ligne-choix{border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin-top:10px;background:#fff}
+.ligne-choix label{display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer}
+.ligne-choix input{margin-top:5px}
+.trace-box{background:var(--vert-c);border:1px solid #86efac;border-radius:14px;padding:14px;font-weight:600;white-space:pre-line}
+.verrou{opacity:.55;pointer-events:none;filter:grayscale(.4)}
+.niveaux{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.niveaux label{border:1px solid var(--bord);border-radius:999px;padding:4px 12px;cursor:pointer;font-weight:700;font-size:.85rem;background:#fff}
+.niveaux input{display:none}
+.niveaux input:checked+span{color:var(--bleu)}
+.niveaux label:has(input:checked){background:var(--bleu-c);border-color:var(--bleu)}
+table.lex{width:100%;border-collapse:separate;border-spacing:0 8px}
+table.lex td{background:#fff;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:12px;vertical-align:top}
+table.lex td:first-child{border-left:1px solid #e2e8f0;border-radius:12px 0 0 12px;font-weight:900;width:30%}
+table.lex td:last-child{border-right:1px solid #e2e8f0;border-radius:0 12px 12px 0}
+.tag{display:inline-block;background:var(--bleu-c);color:var(--bleu);border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:800;margin-bottom:4px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal>.carte{max-width:900px;width:100%;max-height:90vh;overflow:auto;position:relative}
+.modal .fermer{position:absolute;right:14px;top:10px;background:none;border:0;font-size:1.8rem}
+.pre{white-space:pre-line}
+[dir=rtl]{text-align:right}
+@media print{
+  body *{visibility:hidden}
+  #zoneImpression,#zoneImpression *{visibility:visible}
+  #zoneImpression{position:absolute;left:0;top:0;width:100%}
+  .no-print{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker" id="hDiscipline"></span>
+    <h1 id="hTitre"></h1>
+    <p id="hAccroche"></p>
+    <div class="cadrage" id="hCadrage"></div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn btn-clair" onclick="ouvrir('modalEclairage')">Éclairage didactique (enseignant)</button>
+      <button class="btn btn-clair" onclick="toutRecommencer()">Recommencer le parcours</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="carte">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="label">Je travaille en <span id="nbEtapes"></span> étapes</div>
+        <h2 id="titreEtapeHaut"></h2></div>
+      <div style="min-width:200px"><b>Progression <span id="progTxt"></span></b><div class="progress"><div id="progBar" style="width:0"></div></div></div>
+    </div>
+    <p class="muted" id="objectifFinal"></p>
+    <div class="tabs" id="tabs"></div>
+  </section>
+
+  <section class="workspace">
+    <!-- VIDÉO -->
+    <div class="sticky">
+      <div class="carte">
+        <div class="label">Vidéo</div>
+        <h2>Je regarde le passage utile</h2>
+        <div class="video" style="margin-top:10px">
+          <video id="video" controls preload="metadata" playsinline></video>
+          <div id="st" class="st cache"></div>
+          <div id="bulle" class="bulle cache" role="status">
+            <button class="x" onclick="fermerBulle()" aria-label="Fermer">×</button>
+            <div class="label">Aide</div>
+            <b id="bTitre"></b>
+            <p id="bTexte" style="margin:4px 0 8px"></p>
+            <button class="btn btn-bleu btn-petit" id="bAction" onclick="fermerBulle()"></button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-bleu" onclick="voirPassage()">▶ Voir le passage utile</button>
+          <button class="btn btn-blanc" onclick="seek(0,true)">Revoir depuis le début</button>
+        </div>
+        <p class="muted" style="font-size:.9rem">Le passage utile s’arrête automatiquement pour te laisser répondre.</p>
+        <div class="soft" style="margin-top:8px">
+          <h3>Aides vidéo</h3>
+          <p class="muted" style="margin:0 0 8px;font-size:.9rem">Choisis une aide seulement si tu en as besoin. Les traductions aident à comprendre, puis tu reviens aux mots en français.</p>
+          <div class="row" id="stLangs"></div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn btn-blanc btn-petit" id="btnSt" onclick="basculerST()">Afficher les sous-titres</button>
+            <button class="btn btn-blanc btn-petit" id="btnBulles" onclick="basculerBulles()">Masquer les bulles d’aide</button>
+            <button class="btn btn-blanc btn-petit" id="btnTrans" onclick="ouvrir('modalTrans')">Transcription complète</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITÉ -->
+    <div class="carte" id="activite">
+      <div class="label">Activité · <span id="badge"></span></div>
+      <h2 id="titreEtape"></h2>
+      <p class="muted" id="sousTitreEtape" style="margin:0"></p>
+
+      <div class="aides">
+        <b style="align-self:center">Besoin d’aide ?</b>
+        <button class="chip" data-aide="objectif" onclick="montrerAide('objectif')">Mon objectif</button>
+        <button class="chip" data-aide="question" onclick="montrerAide('question')">Question pour m’aider</button>
+        <button class="chip" data-aide="indice" onclick="montrerAide('indice')">Indice</button>
+      </div>
+      <div id="aideTxt" class="aide-txt cache"></div>
+
+      <div class="soft">
+        <h3>Ce que je dois faire</h3>
+        <p id="consigne" style="margin:0"></p>
+        <div class="row" style="margin-top:10px" id="zoneTrad">
+          <span class="muted" style="font-size:.88rem">Comprendre la consigne :</span>
+          <select id="tradLang" class="champ" style="width:auto;padding:6px 10px"></select>
+          <button class="btn btn-bleu btn-petit" onclick="montrerTrad()">Afficher l’aide</button>
+        </div>
+        <div id="trad" class="trad cache"></div>
+      </div>
+
+      <div id="corps" style="margin-top:14px"></div>
+
+      <div class="soft" style="margin-top:14px;background:var(--bleu-c);border-color:#bfdbfe">
+        <h3>Pour réussir</h3>
+        <p id="pourReussir" style="margin:0"></p>
+        <button class="btn btn-blanc btn-petit" style="margin-top:8px" onclick="voirPassage()">Revoir le passage</button>
+      </div>
+
+      <div id="feedback" class="feedback cache" aria-live="polite"></div>
+
+      <div class="nav">
+        <button class="btn btn-blanc" id="btnPrec" onclick="allerA(etape-1)">← Précédent</button>
+        <button class="btn btn-vert" onclick="valider()">Vérifier et valider</button>
+        <button class="btn btn-blanc" id="btnSuiv" onclick="allerA(etape+1)">Suivant →</button>
+      </div>
+      <div id="finParcours" class="feedback ok cache">
+        Toutes les étapes sont validées. Tu peux maintenant garder une trace de ce que tu as compris.
+        <div><button class="btn btn-vert btn-petit" style="margin-top:8px" onclick="document.getElementById('trace').scrollIntoView({behavior:'smooth'})">Je passe à ma trace de travail ↓</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACE -->
+  <section class="carte verrou" id="trace">
+    <div class="label">Trace de travail</div>
+    <h2>Je garde une trace de ce que j’ai compris</h2>
+    <p class="muted" id="traceInfo">Cette partie s’ouvre quand toutes les étapes sont validées.</p>
+    <div class="grid2" style="margin-top:12px">
+      <div class="soft">
+        <h3>Mon bilan personnel</h3>
+        <label>Ce que j’ai bien compris<textarea class="champ" id="bilan1" oninput="sauver()"></textarea></label>
+        <label>Ce que je dois encore travailler<textarea class="champ" id="bilan2" oninput="sauver()"></textarea></label>
+        <label>Les mots que je veux retenir<textarea class="champ" id="bilan3" oninput="sauver()"></textarea></label>
+      </div>
+      <div class="soft">
+        <h3>Je m’évalue par rapport aux objectifs</h3>
+        <div id="autoeval"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn btn-vert" onclick="genererTrace()">Générer ma trace</button>
+      <button class="btn btn-blanc" onclick="copierTrace()">Copier</button>
+      <button class="btn btn-blanc" onclick="imprimer()">Imprimer / enregistrer en PDF</button>
+    </div>
+    <div id="zoneImpression" style="margin-top:14px">
+      <div id="traceFinale" class="trace-box">Clique sur « Générer ma trace » pour afficher ton bilan.</div>
+    </div>
+  </section>
+
+  <!-- LEXIQUE -->
+  <section class="carte" id="lexique">
+    <div class="label">Mon lexique disciplinaire</div>
+    <h2>Les mots pour comprendre et expliquer</h2>
+    <p class="muted">Les traductions servent d’appui pour comprendre, puis je réutilise les mots en français.</p>
+    <div class="row" id="lexLangs"></div>
+    <table class="lex"><tbody id="lexBody"></tbody></table>
+  </section>
+  <p class="muted" style="text-align:center;font-size:.8rem;margin:30px 0">Parcours vidéo accompagné · modèle réutilisable</p>
+</main>
+
+<!-- MODALE TRANSCRIPTION -->
+<div class="modal cache" id="modalTrans" onclick="if(event.target===this)fermer(this.id)">
+  <div class="carte">
+    <button class="fermer" onclick="fermer('modalTrans')" aria-label="Fermer">×</button>
+    <div class="label">Transcription complète</div>
+    <h2>Lire le texte complet dans plusieurs langues</h2>
+    <p class="muted">Cette aide est disponible si le passage reste difficile. Elle ne remplace pas le travail sur la vidéo.</p>
+    <div class="row" id="transLangs"></div>
+    <div class="soft pre" id="transTxt" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- MODALE ÉCLAIRAGE -->
+<div class="modal cache" id="modalEclairage" onclick="if(event.target===this)fermer(this.id)">
+  <div class="carte">
+    <button class="fermer" onclick="fermer('modalEclairage')" aria-label="Fermer">×</button>
+    <div class="label">Éclairage didactique et pédagogique</div>
+    <h2>Lecture professionnelle de la ressource</h2>
+    <div id="eclairage"></div>
+  </div>
+</div>
+
+<script src="contenu.js"></script>
+<script>
+"use strict";
+const C = window.CONTENU;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’']/g," ").replace(/\s+/g," ").trim();
+const CLE = "parcours:" + (C.titre || "") + ":" + (C.video || "");
+const N = C.etapes.length;
+const video = $("video");
+
+let etape = 0, valides = new Set(), rep = {};      // rep[i] = réponses de l'étape i
+let stLang = "fr", stVisible = false, bullesOn = true, bulleFermee = null, finPassage = null;
+
+/* ---------- Sauvegarde locale (le navigateur de l'élève) ---------- */
+function sauver(){
+  try{
+    const auto = {}; document.querySelectorAll('#autoeval input:checked').forEach(r=>auto[r.name]=r.value);
+    localStorage.setItem(CLE, JSON.stringify({etape, valides:[...valides], rep, auto,
+      bilan:[1,2,3].map(i=>$("bilan"+i).value)}));
+  }catch(e){}
+}
+function charger(){
+  try{
+    const d = JSON.parse(localStorage.getItem(CLE)||"null"); if(!d) return;
+    etape = Math.min(d.etape||0, N-1); valides = new Set(d.valides||[]); rep = d.rep||{};
+    (d.bilan||[]).forEach((v,i)=>$("bilan"+(i+1)).value=v||"");
+    Object.entries(d.auto||{}).forEach(([n,v])=>{const r=document.querySelector(`input[name="${n}"][value="${v}"]`); if(r) r.checked=true;});
+  }catch(e){}
+}
+function toutRecommencer(){
+  if(!confirm("Effacer toutes tes réponses et recommencer le parcours ?")) return;
+  try{localStorage.removeItem(CLE);}catch(e){}
+  location.reload();
+}
+
+/* ---------- En-tête ---------- */
+function initEntete(){
+  document.title = C.titre;
+  $("hDiscipline").textContent = [C.discipline, C.public].filter(Boolean).join(" – ");
+  $("hTitre").textContent = C.titre;
+  $("hAccroche").textContent = C.accroche || "";
+  $("hCadrage").innerHTML = (C.cadrage||[]).map(([t,v])=>`<div><b>${esc(t)}</b>${esc(v)}</div>`).join("");
+  $("objectifFinal").textContent = C.objectifFinal || "";
+  $("nbEtapes").textContent = N;
+  video.innerHTML = `<source src="${esc(C.video)}">Ton navigateur ne peut pas lire cette vidéo.`;
+  const e = C.eclairage||{};
+  $("eclairage").innerHTML = `<p>${esc(e.intro||"")}</p>
+    <div class="grid2">${(e.cartes||[]).map(([k,t,x])=>`<div class="soft"><div class="label">${esc(k)}</div><h3>${esc(t)}</h3><p class="muted" style="margin:0">${esc(x)}</p></div>`).join("")}</div>
+    ${(e.paragraphes||[]).map(([t,x])=>`<h3 style="margin-top:16px">${esc(t)}</h3><p class="muted">${esc(x)}</p>`).join("")}`;
+}
+const langNom = k => (C.langues[k]&&C.langues[k].nom)||k;
+const langDir = k => (C.langues[k]&&C.langues[k].rtl)?"rtl":"ltr";
+
+/* ---------- Onglets / navigation ---------- */
+function rendreOnglets(){
+  $("tabs").innerHTML = C.etapes.map((s,i)=>`<button class="tab ${i===etape?"active":""} ${valides.has(i)?"ok":""}" onclick="allerA(${i})">
+    <small>Étape ${i+1}</small><strong>${esc(s.badge)}</strong><small>${esc(s.titreCourt||"")}</small></button>`).join("");
+  $("progTxt").textContent = `${valides.size} / ${N} validée${valides.size>1?"s":""}`;
+  $("progBar").style.width = (100*valides.size/N)+"%";
+  const fini = valides.size===N;
+  $("finParcours").classList.toggle("cache", !fini);
+  $("trace").classList.toggle("verrou", !fini);
+  $("traceInfo").textContent = fini ? "À la fin du parcours, ma trace se construit à partir de mes réponses. Je peux la compléter." : "Cette partie s’ouvre quand toutes les étapes sont validées.";
+}
+function allerA(i){
+  if(i<0||i>=N) return;
+  enregistrerEtape(); etape = i; finPassage = null;
+  afficherEtape(); sauver();
+}
+
+/* ---------- Affichage d'une étape ---------- */
+function afficherEtape(){
+  const s = C.etapes[etape];
+  $("titreEtape").textContent = s.titre; $("titreEtapeHaut").textContent = s.titre;
+  $("sousTitreEtape").textContent = s.sousTitre||"";
+  $("badge").textContent = s.badge||"";
+  $("consigne").textContent = s.consigne||"";
+  $("pourReussir").textContent = s.pourReussir||"";
+  $("aideTxt").classList.add("cache"); $("aideTxt").dataset.type="";
+  document.querySelectorAll("[data-aide]").forEach(b=>{b.classList.remove("on"); b.classList.toggle("cache", !(s.aide&&s.aide[b.dataset.aide]));});
+  const trads = Object.keys(s.consigneTraduite||{});
+  $("zoneTrad").classList.toggle("cache", !trads.length);
+  $("tradLang").innerHTML = trads.map(k=>`<option value="${k}">${esc(langNom(k))}</option>`).join("");
+  $("trad").classList.add("cache");
+  $("feedback").classList.add("cache");
+  $("btnPrec").disabled = etape===0; $("btnSuiv").disabled = etape===N-1;
+  const r = rep[etape] || (rep[etape] = {});
+  $("corps").innerHTML = (RENDUS[s.type]||(()=>"<p>Type d’étape inconnu : "+esc(s.type)+"</p>"))(s, r);
+  if(s.type==="phrase") majMotsChoisis();
+  if(valides.has(etape)) feedback(true, "Étape déjà validée. Tu peux revoir ou modifier ta réponse.");
+  rendreOnglets();
+}
+function montrerAide(type){
+  const box=$("aideTxt"), s=C.etapes[etape];
+  const noms={objectif:"Mon objectif",question:"Question pour m’aider",indice:"Indice"};
+  document.querySelectorAll("[data-aide]").forEach(b=>b.classList.toggle("on", b.dataset.aide===type && box.dataset.type!==type));
+  if(box.dataset.type===type){box.classList.add("cache"); box.dataset.type=""; return;}
+  box.innerHTML = `<b>${noms[type]} :</b> ${esc(s.aide[type])}` + (type==="indice"?`<div class="muted" style="font-size:.85rem;margin-top:4px">Essaie d’abord seul, puis utilise l’indice si tu bloques.</div>`:"");
+  box.dataset.type=type; box.classList.remove("cache");
+}
+function montrerTrad(){
+  const k=$("tradLang").value, box=$("trad");
+  if(!box.classList.contains("cache") && box.dataset.l===k){box.classList.add("cache");return;}
+  box.textContent = C.etapes[etape].consigneTraduite[k]; box.dir=langDir(k); box.dataset.l=k; box.classList.remove("cache");
+}
+
+/* ---------- Types d'activités ---------- */
+const melange = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const RENDUS = {
+  reponse(s, r){
+    return `<div class="soft"><label><b>${esc(s.etiquette||"Ma réponse")}</b>
+      <input id="f_rep" class="champ" style="margin-top:6px" placeholder="${esc(s.exemple||"")}" value="${esc(r.reponse||"")}"></label></div>`;
+  },
+  qcm(s, r){
+    return `<div class="soft"><b>${esc(s.question||"")}</b><div class="ligne-choix">${s.choix.map((c,i)=>
+      `<label><input type="radio" name="f_qcm" value="${i}" ${String(r.choix)===String(i)?"checked":""}> ${esc(c)}</label>`).join("")}</div></div>`;
+  },
+  associer(s, r){
+    const opts = r.ordre || (r.ordre = melange(s.paires.map(p=>p.droite)));
+    return `<div class="soft">${s.paires.map((p,i)=>`<div style="margin-bottom:10px"><b>${esc(p.gauche)}</b>
+      <select class="champ" id="f_ass${i}" style="margin-top:4px"><option value="">Choisir…</option>${opts.map(o=>`<option ${r["a"+i]===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`).join("")}</div>`;
+  },
+  phrase(s, r){
+    const choisis = new Set(r.mots||[]);
+    const m = s.modele;
+    return `<div class="soft"><h3>1. Je choisis au moins ${s.motsMinimum||3} mots</h3>
+      <div class="row" id="banque">${s.banqueDeMots.map(w=>`<button type="button" class="chip ${choisis.has(w)?"on":""}" onclick="this.classList.toggle('on');majMotsChoisis()">${esc(w)}</button>`).join("")}</div>
+      <p class="muted" id="motsChoisis" style="margin:8px 0 0"></p></div>
+      ${m?`<div class="soft" style="margin-top:12px"><h3>2. Je construis ma phrase</h3><p class="muted" style="margin:0 0 8px">Utilise le modèle pour t’aider, puis modifie la phrase avec tes mots.</p>
+      <div class="grid2">${m.morceaux.map((x,i)=>`<label><b>${esc(x.nom)}</b><select class="champ" id="f_mod${i}"><option value="">Choisir…</option>${x.choix.map(c=>`<option ${r["m"+i]===c?"selected":""}>${esc(c)}</option>`).join("")}</select></label>`).join("")}</div>
+      <div class="row" style="margin-top:10px"><button class="btn btn-bleu btn-petit" onclick="construirePhrase()">Construire ma phrase</button></div></div>`:""}
+      <div class="soft" style="margin-top:12px"><h3>Ma phrase</h3><textarea class="champ" id="f_phrase" placeholder="J’écris ma phrase ici…">${esc(r.phrase||"")}</textarea></div>`;
+  },
+  bilan(s, r){
+    return `<div class="soft"><h3>Je fais mes choix de compréhension</h3><p class="muted" style="margin:0">Choisis une réponse dans chaque ligne. Tu découvriras ensuite une trace complète.</p>
+      ${s.lignes.map((l,i)=>`<div class="ligne-choix"><div class="label">${esc(l.nom)}</div><b>${esc(l.consigne||"")}</b>
+        ${l.choix.map(c=>`<label><input type="radio" name="f_bil${i}" value="${esc(c)}" ${r["l"+i]===c?"checked":""}> ${esc(c)}</label>`).join("")}</div>`).join("")}
+      <div class="row" style="margin-top:12px"><button class="btn btn-bleu btn-petit" onclick="afficherBilan()">Afficher ma trace</button></div>
+      <div id="f_bilanTrace" class="trace-box ${r.trace?"":"cache"}" style="margin-top:12px">${esc(r.trace||"")}</div></div>`;
+  }
+};
+function majMotsChoisis(){
+  const w=[...document.querySelectorAll("#banque .chip.on")].map(b=>b.textContent);
+  $("motsChoisis").textContent = w.length ? "Mes mots choisis : "+w.join(" · ") : "Clique sur des mots dans la banque.";
+}
+const remplir = (gabarit, valeurs) => gabarit.replace(/\{([^}]+)\}/g, (_,k)=>valeurs[k] ?? "…");
+function construirePhrase(){
+  const m=C.etapes[etape].modele, v={};
+  m.morceaux.forEach((x,i)=>v[x.nom]=$("f_mod"+i).value);
+  if(Object.values(v).some(x=>!x)) return feedback(false,"Choisis un élément dans chaque menu pour construire ta phrase.");
+  let p = remplir(m.gabarit, v); $("f_phrase").value = p.charAt(0).toUpperCase()+p.slice(1);
+}
+function afficherBilan(){
+  const s=C.etapes[etape], v={};
+  s.lignes.forEach((l,i)=>{const c=document.querySelector(`input[name="f_bil${i}"]:checked`); v[l.nom]=c?c.value:"";});
+  if(Object.values(v).some(x=>!x)) return feedback(false, s.encore||"Choisis une réponse dans chaque ligne.");
+  const t=remplir(s.gabarit,v); const box=$("f_bilanTrace"); box.textContent=t; box.classList.remove("cache");
+}
+
+/* Lit les réponses de l'étape affichée */
+function enregistrerEtape(){
+  const s=C.etapes[etape], r=rep[etape]||(rep[etape]={});
+  if(!$("corps").firstChild) return;
+  if(s.type==="reponse") r.reponse=$("f_rep").value;
+  if(s.type==="qcm"){const c=document.querySelector('input[name="f_qcm"]:checked'); r.choix=c?c.value:null;}
+  if(s.type==="associer") s.paires.forEach((p,i)=>r["a"+i]=$("f_ass"+i).value);
+  if(s.type==="phrase"){
+    r.mots=[...document.querySelectorAll("#banque .chip.on")].map(b=>b.textContent);
+    if(s.modele) s.modele.morceaux.forEach((x,i)=>r["m"+i]=$("f_mod"+i).value);
+    r.phrase=$("f_phrase").value;
+  }
+  if(s.type==="bilan"){
+    s.lignes.forEach((l,i)=>{const c=document.querySelector(`input[name="f_bil${i}"]:checked`); r["l"+i]=c?c.value:"";});
+    r.trace=$("f_bilanTrace").classList.contains("cache")?"":$("f_bilanTrace").textContent;
+  }
+}
+
+/* ---------- Vérification ---------- */
+function verifier(s, r){
+  if(s.type==="reponse"){
+    const t=norm(r.reponse).replace(/[\s.,]/g,"");
+    return !!t && (s.reponsesAcceptees||[]).some(a=>t.includes(norm(a).replace(/[\s.,]/g,"")));
+  }
+  if(s.type==="qcm") return r.choix!==null && Number(r.choix)===s.bonneReponse;
+  if(s.type==="associer") return s.paires.every((p,i)=>r["a"+i]===p.droite);
+  if(s.type==="phrase"){
+    const v=s.verification||{}, p=norm(r.phrase);
+    if((r.mots||[]).length < (s.motsMinimum||0)) return false;
+    if(p.split(" ").filter(Boolean).length < (v.longueurMinimum||1)) return false;
+    return (v.doitContenirUnMotDeChaqueGroupe||[]).every(g=>g.some(w=>p.includes(norm(w))));
+  }
+  if(s.type==="bilan") return s.lignes.every((l,i)=>r["l"+i]) && !!r.trace;
+  return false;
+}
+function feedback(ok,msg){const f=$("feedback"); f.className="feedback "+(ok?"ok":"ko"); f.textContent=msg;}
+function valider(){
+  enregistrerEtape();
+  const s=C.etapes[etape];
+  if(s.type==="bilan" && !rep[etape].trace && s.lignes.every((l,i)=>rep[etape]["l"+i])){afficherBilan(); enregistrerEtape();}
+  const ok=verifier(s, rep[etape]);
+  if(ok) valides.add(etape); else valides.delete(etape);
+  feedback(ok, ok ? (s.bravo||"Réponse validée !")+(etape<N-1?" Tu peux passer à l’étape suivante.":"") : (s.encore||"Ce n’est pas encore ça. Revois le passage et réessaie."));
+  rendreOnglets(); sauver();
+}
+
+/* ---------- Vidéo : passage utile, sous-titres, bulles ---------- */
+function seek(t,play){ try{video.currentTime=t;}catch(e){} if(play) video.play().catch(()=>{}); }
+function voirPassage(){ const s=C.etapes[etape]; finPassage=s.fin; bulleFermee=null; seek(s.debut,true); }
+function rendreLangues(){
+  const ls=Object.keys(C.sousTitres||{});
+  $("stLangs").innerHTML = ls.map(k=>`<button class="chip lang ${k===stLang?"on":""}" onclick="choisirST('${k}')">${esc(langNom(k))}</button>`).join("");
+  const tl=Object.keys(C.transcription||{});
+  $("btnTrans").classList.toggle("cache", !tl.length);
+  $("transLangs").innerHTML = tl.map(k=>`<button class="chip lang" data-l="${k}" onclick="choisirTrans('${k}')">${esc(langNom(k))}</button>`).join("");
+  if(tl.length) choisirTrans(tl[0]);
+  if(!ls.length) $("btnSt").classList.add("cache");
+  if(!(C.bulles||[]).length) $("btnBulles").classList.add("cache");
+}
+function choisirST(k){ stLang=k; if(!stVisible) basculerST(); rendreLangues(); majVideo(); }
+function basculerST(){ stVisible=!stVisible; $("btnSt").textContent=stVisible?"Masquer les sous-titres":"Afficher les sous-titres"; majVideo(); }
+function basculerBulles(){ bullesOn=!bullesOn; $("btnBulles").textContent=bullesOn?"Masquer les bulles d’aide":"Afficher les bulles d’aide"; majVideo(); }
+function choisirTrans(k){
+  document.querySelectorAll("#transLangs .chip").forEach(b=>b.classList.toggle("on",b.dataset.l===k));
+  const t=$("transTxt"); t.textContent=C.transcription[k]; t.dir=langDir(k);
+}
+function fermerBulle(){ const b=$("bulle"); bulleFermee=b.dataset.id; b.classList.add("cache"); }
+function majVideo(){
+  const t=video.currentTime;
+  const lignes=(C.sousTitres||{})[stLang]||[];
+  const l=lignes.find(([a,b])=>t>=a&&t<b);
+  const st=$("st"); st.classList.toggle("cache", !(stVisible&&l)); if(l){st.textContent=l[2]; st.dir=langDir(stLang);}
+  const p=(C.bulles||[]).find(b=>t>=b.start&&t<b.end);
+  const bu=$("bulle");
+  if(bullesOn && p && bulleFermee!==p.id){
+    bu.dataset.id=p.id; $("bTitre").textContent=p.title; $("bTexte").textContent=p.text; $("bAction").textContent=p.action||"OK"; bu.classList.remove("cache");
+  } else bu.classList.add("cache");
+  if(finPassage!==null && t>=finPassage){ video.pause(); finPassage=null; feedback(true,"Fin du passage utile. Réponds maintenant à la question."); }
+}
+video.addEventListener("timeupdate", majVideo);
+video.addEventListener("seeking", majVideo);
+
+/* ---------- Trace finale ---------- */
+function resumeEtape(s, r){
+  if(!r) return "";
+  if(s.type==="reponse") return s.pourLaTrace ? remplir(s.pourLaTrace,{reponse:r.reponse}) : r.reponse;
+  if(s.type==="qcm") return r.choix!=null ? s.choix[r.choix] : "";
+  if(s.type==="associer") return s.paires.map((p,i)=>`${p.gauche} : ${r["a"+i]}`).join("\n");
+  if(s.type==="phrase") return r.phrase + ((r.mots||[]).length?`\nMots choisis : ${r.mots.join(", ")}`:"");
+  if(s.type==="bilan") return r.trace;
+  return "";
+}
+function genererTrace(){
+  if(valides.size<N) return;
+  const auto=(C.autoevaluation||[]).map((o,i)=>{const c=document.querySelector(`input[name="ae${i}"]:checked`); return `– ${o} → ${c?c.value:"non renseigné"}`;});
+  const txt = [`${C.titre}`, ...C.etapes.map((s,i)=>`\n${s.titre}\n${resumeEtape(s,rep[i])}`),
+    `\nMon bilan personnel`, `Ce que j’ai bien compris : ${$("bilan1").value||"…"}`, `Ce que je dois encore travailler : ${$("bilan2").value||"…"}`, `Les mots que je veux retenir : ${$("bilan3").value||"…"}`,
+    auto.length?`\nMon autoévaluation\n${auto.join("\n")}`:""].join("\n");
+  $("traceFinale").textContent = txt; sauver();
+}
+function copierTrace(){ genererTrace(); const t=$("traceFinale").textContent;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>alert("Trace copiée."),()=>{const r=document.createRange();r.selectNodeContents($("traceFinale"));getSelection().removeAllRanges();getSelection().addRange(r);}); }
+function imprimer(){ genererTrace(); window.print(); }
+function rendreAutoeval(){
+  $("autoeval").innerHTML=(C.autoevaluation||[]).map((o,i)=>`<div style="margin-bottom:10px"><b>${esc(o)}</b><div class="niveaux">${["À retravailler","En cours","Réussi"].map(n=>
+    `<label><input type="radio" name="ae${i}" value="${n}" onchange="sauver()"><span>${n}</span></label>`).join("")}</div></div>`).join("");
+}
+
+/* ---------- Lexique ---------- */
+function rendreLexique(l){
+  const langs=["fr",...new Set((C.lexique||[]).flatMap(e=>Object.keys(e.traductions||{})))];
+  $("lexLangs").innerHTML=langs.map(k=>`<button class="chip lang ${k===l?"on":""}" onclick="rendreLexique('${k}')">${esc(langNom(k))}</button>`).join("");
+  $("lexBody").innerHTML=(C.lexique||[]).map(e=>{
+    const t=l==="fr"?e:(e.traductions||{})[l]; if(!t) return "";
+    return `<tr dir="${langDir(l)}"><td>${esc(t.mot)}${l!=="fr"?`<div class="muted" style="font-weight:600;font-size:.85rem" dir="ltr">${esc(e.mot)}</div>`:""}</td>
+      <td>${e.categorie&&l==="fr"?`<span class="tag">${esc(e.categorie)}</span><br>`:""}${esc(t.definition)}</td></tr>`;}).join("");
+  if(!(C.lexique||[]).length) $("lexique").classList.add("cache");
+}
+
+/* ---------- Modales ---------- */
+function ouvrir(id){ $(id).classList.remove("cache"); }
+function fermer(id){ $(id).classList.add("cache"); }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.add("cache")); });
+
+/* ---------- Démarrage ---------- */
+initEntete(); rendreAutoeval(); charger(); rendreLangues(); rendreLexique("fr"); afficherEtape();
+if(valides.size===N) genererTrace();
+document.addEventListener("change", sauver);
+</script>
+</body>
+</html>
