@@ -83,3 +83,8 @@ Vous obtenez un brouillon complet (étapes, traductions, lexique). Relisez-le et
 - Les réponses des élèves sont gardées dans leur navigateur : s'ils rechargent la page, ils retrouvent leur travail.
 - Les vidéos YouTube ne fonctionnent qu'en ligne (sur GitHub Pages), pas en ouvrant le fichier par double-clic sur l'ordinateur.
 - L'exemple `amazonie.js` reprend l'appli d'origine. L'éditeur y signale un décalage : certains temps vont au-delà de la fin de la vidéo (1:35 pour une vidéo de 1:14).
+
+## Assistant IA « Mon assistant » (Albert)
+Un bouton **🤖 Mon assistant** peut apparaître dans les trois applis élèves. L’assistant connaît l’appli, l’étape, le niveau, la langue maternelle, le document (texte, image) et ce que l’élève a déjà fait. Il explique la consigne et les mots, donne des indices et vérifie le travail, sans faire à la place de l’élève. Il répond en français simple, avec une aide en langue maternelle.
+
+Mise en service : voir `serveur-assistant/README.md` (Render + clé Albert), puis indiquer l’adresse du serveur dans `modele/config-assistant.js`. Tant que cette adresse est vide, le bouton n’apparaît pas.

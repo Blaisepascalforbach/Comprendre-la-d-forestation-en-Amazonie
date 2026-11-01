@@ -563,5 +563,12 @@ function telecharger(fmt){
 window.addEventListener("beforeunload",()=>{ if(TX) sauver(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") fermerBulle(); });
 </script>
+<script>
+window.contexteAssistant=function(){ if(!TX) return {app:"texte"}; try{ lireEtape(); }catch(e){} const s=ETAPES[etape];
+  return {app:"texte",niveau:TX.niveau,langue,titre:TX.titre,matiere:TX.matiere,etape:s.titre,consigne:s.intro+" Objectif : "+s.objectif+" Méthode : "+s.methode+" Exigences (niveau "+TX.niveau+") : "+exigences(),
+    document:TX.texte,reponses:resumerReponses({decouvrir:R.decouvrir,reperer:R.reperer,mots:R.mots,texte:R.texte})}; };
+</script>
+<script src="config-assistant.js"></script>
+<script src="assistant.js"></script>
 </body>
 </html>

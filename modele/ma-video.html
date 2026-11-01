@@ -499,5 +499,12 @@ function feedbackTrace(m){ const t=$("traceInfo"); const old=t.textContent; t.te
 })();
 window.addEventListener("beforeunload",()=>{ if(V) sauver(); });
 </script>
+<script>
+window.contexteAssistant=function(){ if(!V) return {app:"video"}; try{ lireEtape(); }catch(e){} const s=ETAPES[etape];
+  return {app:"video",niveau:"A2",langue,titre:V.titre||V.nom,matiere:V.matiere,etape:s.titre,consigne:s.intro+" Objectif : "+s.objectif+" Méthode : "+s.methode,
+    document:"Vidéo"+(V.local?" (fichier de l’ordinateur)":" : "+V.src)+". L’assistant ne voit pas la vidéo."+(R.notes?"\nNotes d’écoute de l’élève : "+R.notes:""),reponses:resumerReponses({decouvrir:R.decouvrir,reperer:R.reperer,mots:R.mots,texte:R.texte})}; };
+</script>
+<script src="config-assistant.js"></script>
+<script src="assistant.js"></script>
 </body>
 </html>

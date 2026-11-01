@@ -1,0 +1,22 @@
+# Déploiement Render (Blueprint) du serveur de l'assistant IA.
+# Render > New > Blueprint > choisir ce dépôt. Renseigner ALBERT_API_KEY (et CODE_CLASSE si souhaité).
+services:
+  - type: web
+    name: assistant-flsco
+    runtime: node
+    plan: free
+    rootDir: serveur-assistant
+    buildCommand: echo "aucune dépendance"
+    startCommand: node server.js
+    healthCheckPath: /sante
+    envVars:
+      - key: ALBERT_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://blaisepascalforbach.github.io
+      - key: CODE_CLASSE
+        sync: false
+      - key: LIMITE_PAR_JOUR_ELEVE
+        value: "60"
+      - key: LIMITE_PAR_JOUR_TOTAL
+        value: "3000"

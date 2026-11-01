@@ -587,5 +587,13 @@ function telechargerImage(){ imageAnnotee(u=>{ if(!u) return alert("Le site d’
 window.addEventListener("beforeunload",()=>{ if(IMG) sauver(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") $("modalGrand").classList.add("cache"); });
 </script>
+<script>
+window.contexteAssistant=function(){ if(!IMG) return {app:"image"}; try{ lireEtape(); }catch(e){} const s=ETAPES[etape];
+  return {app:"image",niveau:IMG.niveau||"A2",langue,titre:IMG.titre||IMG.nom,matiere:IMG.matiere,etape:s.titre,consigne:s.intro+" Objectif : "+s.objectif+" Méthode : "+s.methode+" Exigences (niveau "+(IMG.niveau||"A2")+") : "+exigences(),
+    document:"Image étudiée (jointe si l’assistant peut voir les images)."+(R.notes?"\nNotes d’observation de l’élève : "+R.notes:""),image:IMG.src,
+    reponses:resumerReponses({decouvrir:R.decouvrir,reperes:R.reperes.map((p,i)=>`repère ${i+1} (${p.ou}) : ${p.quoi||"?"}`),mots:R.mots,texte:R.texte})}; };
+</script>
+<script src="config-assistant.js"></script>
+<script src="assistant.js"></script>
 </body>
 </html>
