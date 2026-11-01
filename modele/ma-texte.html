@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Je comprends un texte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Appli élève générique : fonctionne avec N'IMPORTE QUEL texte, niveaux A1/A2/B1, appui arabe, turc, ukrainien, albanais, géorgien.
+     Aucune préparation par l'enseignant n'est nécessaire. Rien n'est envoyé sur internet : tout reste dans le navigateur. -->
+<style>
+:root{--bleu:#1d4ed8;--bleu-c:#eff6ff;--vert:#15803d;--vert-c:#ecfdf5;--encre:#0f172a;--gris:#475569;--bord:#dbe3ef;--orange-c:#fffbeb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:var(--encre);line-height:1.5}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+header{background:linear-gradient(135deg,#0f172a,#1e3a8a 60%,#166534);color:#fff;padding:26px 0 22px}
+h1{font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:900;margin:6px 0;line-height:1.1}
+header p{color:#dbeafe;margin:0;max-width:820px}
+.kicker{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:3px 12px;border-radius:999px;font-size:.85rem;font-weight:700}
+.btn{border:0;border-radius:12px;padding:9px 16px;font-weight:800;font-size:.92rem;text-decoration:none;display:inline-block}
+.btn-bleu{background:var(--bleu);color:#fff}.btn-vert{background:var(--vert);color:#fff}
+.btn-blanc{background:#fff;color:var(--encre);border:1px solid var(--bord)}
+.btn-clair{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn-p{padding:6px 11px;font-size:.82rem;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.carte{background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 10px 30px -22px rgba(15,23,42,.5);padding:22px}
+.soft{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-top:12px}
+.label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--bleu)}
+h2{font-size:1.45rem;font-weight:900;margin:2px 0 4px}
+h3{font-size:1.02rem;font-weight:900;margin:0 0 6px}
+.muted{color:var(--gris)}
+section{margin-top:22px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cache{display:none!important}
+.c{width:100%;border:2px solid #cbd5e1;border-radius:12px;padding:9px 12px;background:#fff;margin-top:4px}
+.c:focus{border-color:var(--bleu);outline:none}
+textarea.c{min-height:80px;resize:vertical}
+label.f{display:block;margin-top:10px;font-weight:700}
+label.f small{font-weight:500;color:var(--gris)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+/* choix vidéo */
+.choix{max-width:860px;margin:30px auto}
+.source{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.source>div{border:1px solid var(--bord);border-radius:16px;padding:14px;background:#fff}
+/* travail */
+.tabs{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px;margin-top:10px}
+.tab{min-width:170px;text-align:left;border:1px solid var(--bord);background:#fff;border-radius:16px;padding:9px 13px;color:#334155}
+.tab small{display:block;font-weight:700;font-size:.75rem;opacity:.8}.tab strong{display:block}
+.tab.active{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.tab.ok small::after{content:" ✓";color:#16a34a;font-weight:900}.tab.active.ok small::after{color:#bbf7d0}
+.progress{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--bleu),var(--vert));transition:width .4s}
+.workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start}
+.sticky{position:sticky;top:12px}
+@media(max-width:980px){.workspace{grid-template-columns:1fr}.sticky{position:static}}
+.video{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#020617}
+.video video,.video iframe{width:100%;height:100%;border:0;display:block}
+.chrono{background:var(--bleu-c);color:var(--bleu);border:1px solid #bfdbfe;border-radius:8px;padding:5px 8px;font-weight:800;font-size:.8rem;white-space:nowrap}
+.moment{background:#fff;color:var(--bleu);border:1px solid #bfdbfe;border-radius:999px;padding:2px 9px;font-weight:800;font-size:.78rem}
+.chip{border:1px solid var(--bord);background:#fff;border-radius:999px;padding:5px 11px;font-weight:700;font-size:.86rem}
+.chip.on{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+.aides{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.aide-txt{background:var(--orange-c);border:1px solid #fde68a;border-radius:12px;padding:12px}
+.ligne-info{display:grid;grid-template-columns:130px 1fr auto;gap:8px;align-items:center;margin-top:8px}
+@media(max-width:560px){.ligne-info{grid-template-columns:1fr}}
+.ligne-info b{font-size:.92rem}
+.mot{border:1px solid #e2e8f0;border-radius:14px;padding:10px 12px;margin-top:8px;background:#fff;display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:start}
+@media(max-width:560px){.mot{grid-template-columns:1fr}}
+.feedback{margin-top:14px;border-radius:14px;padding:12px 14px;font-weight:700}
+.feedback.ok{background:var(--vert-c);border:1px solid #86efac;color:#166534}
+.feedback.ko{background:var(--orange-c);border:1px solid #fcd34d;color:#92400e}
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px}
+.compteur{font-size:1.4rem;font-weight:900;font-variant-numeric:tabular-nums}
+.trace-box{background:var(--vert-c);border:1px solid #86efac;border-radius:14px;padding:14px;font-weight:600;white-space:pre-line}
+.verrou{opacity:.55;pointer-events:none;filter:grayscale(.4)}
+.niveaux{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.niveaux label{border:1px solid var(--bord);border-radius:999px;padding:4px 12px;cursor:pointer;font-weight:700;font-size:.85rem;background:#fff}
+.niveaux input{display:none}
+.niveaux label:has(input:checked){background:var(--bleu-c);border-color:var(--bleu);color:var(--bleu)}
+.amorce{display:block;width:100%;text-align:left;border:1px dashed #93c5fd;background:var(--bleu-c);border-radius:10px;padding:7px 10px;margin-top:6px;font-weight:700;color:#1e3a8a}
+.compte{font-size:.85rem;font-weight:700}
+.compte.ok{color:var(--vert)}
+.texte{background:#fffdf7;border:1px solid #e7e2d3;border-radius:14px;padding:16px 18px;margin-top:8px;max-height:64vh;overflow:auto;line-height:1.85}
+.texte p{margin:0 0 12px}
+.numP{display:inline-block;min-width:22px;font-size:.72rem;font-weight:900;color:#fff;background:#94a3b8;border-radius:6px;text-align:center;margin-right:6px;vertical-align:2px}
+.w{cursor:pointer;border-radius:4px}.w:hover{background:#dbeafe}
+.w.lex{background:#fef08a;box-shadow:0 2px 0 #eab308}
+.phrase.lue{background:#dcfce7;border-radius:4px}
+.texte.focus .phrase{opacity:.28;transition:opacity .15s}.texte.focus .phrase.vise,.texte.focus .phrase.lue{opacity:1}
+.bulle-mot{position:absolute;z-index:40;background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:10px 12px;box-shadow:0 14px 30px -12px rgba(15,23,42,.45);max-width:360px}
+.trad{background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:10px 12px;margin-top:12px;font-weight:600}
+.niveauxChoix{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.niveauxChoix{grid-template-columns:1fr}}
+.niv{border:2px solid var(--bord);background:#fff;border-radius:14px;padding:12px;text-align:left}
+.niv b{display:block;font-size:1.4rem;color:var(--bleu)}.niv span{font-size:.88rem;color:var(--gris)}
+.niv.on{border-color:var(--bleu);background:var(--bleu-c)}
+.btn.on{background:var(--bleu);color:#fff;border-color:var(--bleu)}
+@media print{body *{visibility:hidden}#zoneImpression,#zoneImpression *{visibility:visible}#zoneImpression{position:absolute;left:0;top:0;width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="kicker" id="kicker">Je travaille avec un texte</span>
+    <h1 id="titrePage">Je comprends un texte</h1>
+    <p>Je colle un texte. Je choisis mon niveau. L’appli m’aide à le comprendre en 4 étapes : je découvre, je repère, je retiens, j’explique.</p>
+    <div class="row" style="margin-top:14px">
+      <label style="font-weight:700;font-size:.9rem">Ma langue :
+        <select id="maLangue" class="c" style="width:auto;display:inline-block;margin-left:6px;padding:5px 8px" onchange="changerLangue(this.value)"></select></label>
+      <button class="btn btn-clair btn-p cache" id="btnAutre" onclick="autreTexte()">Changer de texte</button>
+      <a class="btn btn-clair btn-p" href="ma-image.html" style="text-decoration:none">Image</a>
+      <a class="btn btn-clair btn-p" href="ma-video.html" style="text-decoration:none">Vidéo</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ ÉCRAN 1 : CHOIX DU TEXTE ============ -->
+<main class="wrap" id="ecranChoix">
+  <div class="choix carte">
+    <div class="label">Étape 0</div>
+    <h2>Je choisis mon texte et mon niveau</h2>
+    <div id="tradChoix" class="trad cache"></div>
+    <label class="f">Je colle mon texte ici <small>(ou j’ouvre un fichier .txt)</small>
+      <textarea class="c" id="texteSource" style="min-height:200px" placeholder="Je copie le texte (manuel, site internet, document du professeur…) puis je le colle ici avec Ctrl + V." oninput="majInfosTexte()"></textarea></label>
+    <div class="row" style="justify-content:space-between;margin-top:6px">
+      <label class="btn btn-blanc btn-p" style="cursor:pointer">Ouvrir un fichier .txt<input type="file" accept=".txt,text/plain" class="cache" onchange="ouvrirFichier(this)"></label>
+      <span class="muted" id="infosTexte" style="font-size:.88rem"></span>
+    </div>
+    <div class="grid2" style="margin-top:4px">
+      <label class="f">Le titre du texte <small>(si je le connais)</small><input class="c" id="titreTxt"></label>
+      <label class="f">La matière <small>(facultatif)</small><input class="c" id="matiere" placeholder="Ex. : Histoire, SVT, Français…"></label>
+    </div>
+    <h3 style="margin-top:16px">Mon niveau en français</h3>
+    <div class="niveauxChoix" id="niveauxChoix"></div>
+    <div class="row" style="margin-top:16px"><button class="btn btn-bleu" onclick="commencer()">Commencer →</button></div>
+    <div id="erreurChoix" class="feedback ko cache"></div>
+    <div id="reprises"></div>
+  </div>
+</main>
+
+<!-- ============ ÉCRAN 2 : LE TRAVAIL ============ -->
+<main class="wrap cache" id="ecranTravail">
+  <section class="carte">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="label">Je travaille en 4 étapes · niveau <span id="niveauHaut"></span></div><h2 id="titreHaut"></h2></div>
+      <div style="min-width:200px"><b>Progression <span id="progTxt"></span></b><div class="progress"><div id="progBar"></div></div></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </section>
+
+  <section class="workspace">
+    <div class="sticky">
+      <div class="carte">
+        <div class="label">Mon texte</div>
+        <div class="row" style="justify-content:space-between"><h2 id="nomTxt">Je lis</h2>
+          <div class="row">
+            <button class="btn btn-blanc btn-p" id="btnLire" onclick="lireTout()">🔊 Écouter</button>
+            <button class="btn btn-blanc btn-p" onclick="taille(1)" title="Agrandir">A+</button>
+            <button class="btn btn-blanc btn-p" onclick="taille(-1)" title="Réduire">A−</button>
+            <button class="btn btn-blanc btn-p" id="btnFocus" onclick="basculerFocus()">☰ Ligne par ligne</button>
+          </div></div>
+        <div id="texte" class="texte"></div>
+        <p class="muted" style="font-size:.85rem;margin:8px 0 0">👆 Je clique sur un mot pour l’écouter, le traduire ou l’ajouter à mon lexique. Je peux aussi <b>sélectionner</b> une phrase.</p>
+      </div>
+    </div>
+
+    <div class="carte">
+      <div class="label">Activité · <span id="badge"></span></div>
+      <h2 id="titreEtape"></h2>
+      <p class="muted" id="introEtape" style="margin:0"></p>
+      <div class="aides">
+        <b style="align-self:center">Besoin d’aide ?</b>
+        <button class="chip" onclick="aide('objectif',this)">Mon objectif</button>
+        <button class="chip" onclick="aide('methode',this)">Comment faire</button>
+        <button class="chip" id="btnTrad" onclick="aide('langue',this)">Dans ma langue</button>
+      </div>
+      <div id="aideTxt" class="aide-txt cache"></div>
+      <div id="corps"></div>
+      <div id="feedback" class="feedback cache" aria-live="polite"></div>
+      <div class="nav">
+        <button class="btn btn-blanc" id="btnPrec" onclick="aller(etape-1)">← Précédent</button>
+        <button class="btn btn-vert" onclick="valider()">Vérifier et valider</button>
+        <button class="btn btn-blanc" id="btnSuiv" onclick="aller(etape+1)">Suivant →</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="carte verrou" id="trace">
+    <div class="label">Trace de travail</div>
+    <h2>Je garde une trace de ce que j’ai compris</h2>
+    <p class="muted" id="traceInfo">Cette partie s’ouvre quand les 4 étapes sont validées.</p>
+    <div class="grid2">
+      <div class="soft">
+        <h3>Mon bilan personnel</h3>
+        <label class="f">Ce que j’ai bien compris<textarea class="c" id="bilan1" oninput="sauver()"></textarea></label>
+        <label class="f">Ce que je dois encore travailler<textarea class="c" id="bilan2" oninput="sauver()"></textarea></label>
+        <label class="f">Les aides qui m’ont été utiles<textarea class="c" id="bilan3" oninput="sauver()"></textarea></label>
+      </div>
+      <div class="soft"><h3>Je m’évalue</h3><div id="autoeval"></div></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn btn-vert" onclick="genererTrace()">Générer ma trace</button>
+      <button class="btn btn-blanc" onclick="copierTrace()">Copier</button>
+      <button class="btn btn-blanc" onclick="genererTrace();print()">Imprimer / PDF</button>
+      <button class="btn btn-blanc" onclick="telecharger()">Télécharger (.txt)</button>
+    </div>
+    <div id="zoneImpression" style="margin-top:14px"><div id="traceFinale" class="trace-box">Clique sur « Générer ma trace ».</div></div>
+  </section>
+  <p class="muted" style="text-align:center;font-size:.8rem;margin:30px 0">Mon travail est enregistré dans ce navigateur. Rien n’est envoyé sur internet.</p>
+</main>
+
+<div id="bulleMot" class="bulle-mot cache" role="dialog"></div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g,"'");
+const nbMots=s=>String(s||"").trim().split(/\s+/).filter(Boolean).length;
+
+/* ================= Langues d'appui ================= */
+const LANGUES={fr:"Français",ar:"العربية",tr:"Türkçe",uk:"Українська",sq:"Shqip",ka:"ქართული"};
+const RTL=new Set(["ar"]);
+const TRAD={
+ choix:{
+  ar:"انسخ النص والصقه في الخانة. اختر مستواك في الفرنسية: A1 (مبتدئ)، A2، أو B1. ثم اضغط على «Commencer».",
+  tr:"Metni kopyala ve kutuya yapıştır. Fransızca seviyeni seç: A1 (başlangıç), A2 veya B1. Sonra « Commencer » düğmesine tıkla.",
+  uk:"Скопіюй текст і встав його в поле. Вибери свій рівень французької: A1 (початковий), A2 або B1. Потім натисни « Commencer ».",
+  sq:"Kopjo tekstin dhe ngjite në kuti. Zgjidh nivelin tënd në frëngjisht: A1 (fillestar), A2 ose B1. Pastaj kliko « Commencer ».",
+  ka:"დააკოპირე ტექსტი და ჩასვი ველში. აირჩიე შენი ფრანგულის დონე: A1 (დამწყები), A2 ან B1. შემდეგ დააჭირე « Commencer »-ს."},
+ decouvrir:{
+  ar:"انظر إلى النص قبل أن تقرأه بالتفصيل: العنوان، الصور، الفقرات. قل ما نوع النص وعمّ يتحدث. يمكنك الاستماع إلى النص بالضغط على 🔊.",
+  tr:"Metni ayrıntılı okumadan önce ona bak: başlık, resimler, paragraflar. Metnin türünü ve konusunu söyle. 🔊 düğmesine tıklayarak metni dinleyebilirsin.",
+  uk:"Подивись на текст, перш ніж читати його детально: заголовок, малюнки, абзаци. Скажи, що це за текст і про що він. Можеш послухати текст, натиснувши 🔊.",
+  sq:"Shiko tekstin para se ta lexosh me kujdes: titullin, figurat, paragrafët. Thuaj çfarë lloj teksti është dhe për çfarë flet. Mund ta dëgjosh tekstin duke klikuar 🔊.",
+  ka:"სანამ ტექსტს დეტალურად წაიკითხავ, დაათვალიერე: სათაური, სურათები, აბზაცები. თქვი, როგორი ტექსტია და რაზეა. შეგიძლია ტექსტს მოუსმინო 🔊 ღილაკით."},
+ reperer:{
+  ar:"اقرأ النص وابحث عن المعلومات المهمة: من، ماذا، أين، متى، كم، لماذا. حدّد كلمات أو جملة في النص، ثم اضغط على 📌 لنقلها إلى الخانة.",
+  tr:"Metni oku ve önemli bilgileri bul: kim, ne, nerede, ne zaman, kaç, neden. Metinde kelimeleri veya bir cümleyi seç, sonra kutuya aktarmak için 📌 düğmesine tıkla.",
+  uk:"Прочитай текст і знайди важливу інформацію: хто, що, де, коли, скільки, чому. Виділи слова або речення в тексті, потім натисни 📌, щоб перенести їх у поле.",
+  sq:"Lexo tekstin dhe gjej informacionet e rëndësishme: kush, çfarë, ku, kur, sa, pse. Përzgjidh fjalë ose një fjali në tekst, pastaj kliko 📌 për ta vendosur në kuti.",
+  ka:"წაიკითხე ტექსტი და იპოვე მნიშვნელოვანი ინფორმაცია: ვინ, რა, სად, როდის, რამდენი, რატომ. მონიშნე სიტყვები ან წინადადება ტექსტში და დააჭირე 📌-ს, რომ ველში გადაიტანო."},
+ retenir:{
+  ar:"اضغط على الكلمات المهمة في النص لإضافتها إلى معجمك. لكل كلمة، اكتب معناها بلغتك أو بالفرنسية. يمكنك استعمال زر «ترجمة».",
+  tr:"Önemli kelimeleri sözlüğüne eklemek için metindeki kelimelere tıkla. Her kelime için anlamını kendi dilinde ya da Fransızca yaz. « Çevir » düğmesini kullanabilirsin.",
+  uk:"Натискай на важливі слова в тексті, щоб додати їх до свого словника. Для кожного слова напиши його значення своєю мовою або французькою. Можеш скористатися кнопкою « Перекласти ».",
+  sq:"Kliko mbi fjalët e rëndësishme në tekst për t’i shtuar në fjalorin tënd. Për çdo fjalë, shkruaj kuptimin në gjuhën tënde ose në frëngjisht. Mund të përdorësh butonin « Përkthe ».",
+  ka:"დააჭირე ტექსტში მნიშვნელოვან სიტყვებს, რომ ლექსიკონში დაამატო. თითოეული სიტყვისთვის დაწერე მნიშვნელობა შენს ენაზე ან ფრანგულად. შეგიძლია გამოიყენო ღილაკი « თარგმნა »."},
+ expliquer:{
+  ar:"اشرح النص بالفرنسية بجملك الخاصة. اضغط على بداية جملة ثم أكملها. استعمل كلمات من معجمك. العدّاد تحت النص يبيّن لك ما ينقص.",
+  tr:"Metni kendi cümlelerinle Fransızca açıkla. Bir cümle başlangıcına tıkla ve tamamla. Sözlüğündeki kelimeleri kullan. Metnin altındaki sayaç neyin eksik olduğunu gösterir.",
+  uk:"Поясни текст французькою своїми словами. Натисни на початок речення й доповни його. Використовуй слова зі свого словника. Лічильник під текстом показує, чого бракує.",
+  sq:"Shpjego tekstin në frëngjisht me fjalët e tua. Kliko mbi një fillim fjalie dhe plotësoje. Përdor fjalë nga fjalori yt. Numëruesi poshtë tekstit të tregon çfarë mungon.",
+  ka:"ახსენი ტექსტი ფრანგულად შენი სიტყვებით. დააჭირე წინადადების დასაწყისს და დაასრულე. გამოიყენე სიტყვები შენი ლექსიკონიდან. ტექსტის ქვეშ მრიცხველი გაჩვენებს, რა აკლია."}
+};
+const UI={ /* petits libellés traduits */
+ traduire:{fr:"Traduire",ar:"ترجمة",tr:"Çevir",uk:"Перекласти",sq:"Përkthe",ka:"თარგმნა"},
+ ecouter:{fr:"Écouter",ar:"استمع",tr:"Dinle",uk:"Слухати",sq:"Dëgjo",ka:"მოსმენა"},
+ ajouter:{fr:"Mon lexique",ar:"معجمي",tr:"Sözlüğüm",uk:"Мій словник",sq:"Fjalori im",ka:"ჩემი ლექსიკონი"},
+ sens:{fr:"Ce que ça veut dire",ar:"المعنى بلغتي",tr:"Kendi dilimde anlamı",uk:"Значення моєю мовою",sq:"Kuptimi në gjuhën time",ka:"მნიშვნელობა ჩემს ენაზე"}
+};
+const t=(k)=>(UI[k][langue]||UI[k].fr)+(langue!=="fr"?" · "+UI[k].fr:"");
+
+/* ================= Niveaux ================= */
+const NIVEAUX={
+ A1:{nom:"A1",desc:"Je commence à apprendre le français.",infos:3,mots:4,phrases:2,longueur:12,motsLex:1,connecteur:false,phraseDecouvrir:false},
+ A2:{nom:"A2",desc:"Je comprends des phrases simples.",infos:4,mots:5,phrases:3,longueur:25,motsLex:2,connecteur:false,phraseDecouvrir:true},
+ B1:{nom:"B1",desc:"Je comprends l’essentiel d’un texte.",infos:5,mots:6,phrases:4,longueur:45,motsLex:3,connecteur:true,phraseDecouvrir:true}
+};
+const CONNECTEURS=["parce que","car","donc","alors","mais","cependant","pourtant","ensuite","enfin","d’abord","grâce à","à cause de","c’est pourquoi","par exemple"];
+const AMORCES={
+ A1:["Le texte parle de…","Il y a…","C’est à…","Je comprends que…"],
+ A2:["Ce texte parle de…","Le personnage principal est…","L’histoire se passe…","D’abord,… Ensuite,…","Je retiens que…","J’ai appris que…"],
+ B1:["Ce texte est… Il parle de…","L’auteur explique que…","D’abord,… Ensuite,… Enfin,…","C’est important parce que…","Cela a pour conséquence…","Cependant,…","À mon avis,…","En résumé,…"]
+};
+const TYPES_TEXTE=["un récit / une histoire","un article","un texte de manuel","une lettre / un mail","un dialogue","un mode d’emploi / une recette","une affiche / une annonce","un poème","autre"];
+const INFOS=[["qui","Qui ?","les personnes, les personnages"],["quoi","Quoi ?","ce qui se passe, l’action"],["ou","Où ?","le lieu"],["quand","Quand ?","la date, le moment"],["combien","Combien ?","un chiffre, une quantité"],["pourquoi","Pourquoi ?","une cause, une raison"]];
+const CATEGORIES=["un nom","un verbe","un adjectif","un mot de liaison","une expression","autre"];
+const ETAPES=[
+ {id:"decouvrir",badge:"Je découvre",court:"Le texte",titre:"Étape 1 – Je découvre le texte",intro:"Je regarde le texte avant de le lire en détail : le titre, la forme, les paragraphes.",
+  objectif:"Dire quel type de texte c’est et de quoi il parle.",methode:"Lis d’abord le titre et la première phrase de chaque paragraphe. Écoute le texte avec 🔊 si tu veux. Ne cherche pas encore à tout comprendre."},
+ {id:"reperer",badge:"Je repère",court:"Les informations",titre:"Étape 2 – Je repère les informations importantes",intro:"Je lis le texte et je relève les informations principales.",
+  objectif:"Repérer les informations importantes : qui, quoi, où, quand, combien, pourquoi.",methode:"Sélectionne des mots dans le texte avec la souris (ou le doigt), puis clique sur 📌 à côté de la bonne question. Tu peux aussi écrire toi-même."},
+ {id:"retenir",badge:"Je retiens",court:"Mes mots",titre:"Étape 3 – Je retiens les mots importants",intro:"Je clique sur les mots importants du texte pour construire mon lexique.",
+  objectif:"Retenir les mots importants du texte et savoir ce qu’ils veulent dire.",methode:"Choisis des mots qui reviennent souvent ou qui sont dans le titre. Écris leur sens dans ta langue ou en français. Les mots de ton lexique sont surlignés dans le texte."},
+ {id:"expliquer",badge:"J’explique",court:"Avec mes mots",titre:"Étape 4 – J’explique le texte avec mes mots",intro:"J’écris un petit texte pour expliquer ce que j’ai compris.",
+  objectif:"Expliquer le texte en français avec mes propres phrases et les mots de mon lexique.",methode:"Clique sur un début de phrase, puis complète-le. Clique sur tes mots pour les ajouter. Ne recopie pas les phrases du texte : utilise tes mots."}
+];
+const OBJECTIFS=["Je sais dire de quoi parle un texte.","Je sais repérer des informations importantes dans un texte.","Je sais retenir et expliquer des mots nouveaux.","Je sais expliquer un texte avec mes mots en français."];
+
+/* ================= État ================= */
+let TX=null, etape=0, valides=new Set(), R=freshR(), langue="fr", niveauChoisi="A2", tailleTxt=1.05;
+function freshR(){ return {decouvrir:{},reperer:{},mots:[],texte:"",bilan:["","",""],auto:{}}; }
+const N=()=>NIVEAUX[TX.niveau];
+const hash=s=>{ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return (h>>>0).toString(36)+s.length.toString(36); };
+const cle=()=>"montexte:"+TX.id;
+function sauver(){
+  if(!TX) return; lireEtape(); R.bilan=[1,2,3].map(i=>$("bilan"+i).value);
+  document.querySelectorAll("#autoeval input:checked").forEach(r=>R.auto[r.name]=r.value);
+  try{ localStorage.setItem(cle(),JSON.stringify({TX,etape,valides:[...valides],R,date:Date.now()})); }catch(e){}
+}
+function charger(){ try{ const d=JSON.parse(localStorage.getItem(cle())||"null"); if(!d) return false; etape=d.etape||0; valides=new Set(d.valides||[]); R=Object.assign(freshR(),d.R||{}); return true; }catch(e){ return false; } }
+
+/* ================= Choix ================= */
+function rendreNiveaux(){ $("niveauxChoix").innerHTML=Object.values(NIVEAUX).map(n=>`<button class="niv ${n.nom===niveauChoisi?"on":""}" onclick="niveauChoisi='${n.nom}';rendreNiveaux()"><b>${n.nom}</b><span>${n.desc}</span></button>`).join(""); }
+function majInfosTexte(){ const s=$("texteSource").value, n=nbMots(s);
+  const ph=s.split(/[.!?]+/).filter(x=>nbMots(x)>0), moy=ph.length?Math.round(n/ph.length):0;
+  $("infosTexte").textContent=n?`${n} mots · ${ph.length} phrase(s) · environ ${moy} mots par phrase`:""; }
+function ouvrirFichier(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $("texteSource").value=r.result; if(!$("titreTxt").value) $("titreTxt").value=f.name.replace(/\.[^.]+$/,""); majInfosTexte(); }; r.readAsText(f); }
+function commencer(){
+  const s=$("texteSource").value.replace(/\r/g,"").trim();
+  if(nbMots(s)<15){ const e=$("erreurChoix"); e.textContent="Colle d’abord un texte (au moins 15 mots)."; e.classList.remove("cache"); return; }
+  TX={texte:s,titre:$("titreTxt").value.trim(),matiere:$("matiere").value.trim(),niveau:niveauChoisi}; TX.id=hash(s)+TX.niveau;
+  ouvrirTravail();
+}
+function ouvrirTravail(){
+  etape=0; valides=new Set(); R=freshR(); const repris=charger();
+  $("ecranChoix").classList.add("cache"); $("ecranTravail").classList.remove("cache"); $("btnAutre").classList.remove("cache");
+  $("titrePage").textContent=TX.titre||"Je comprends un texte";
+  $("kicker").textContent=(TX.matiere?TX.matiere+" – ":"")+"je travaille avec un texte · niveau "+TX.niveau;
+  $("titreHaut").textContent=TX.titre||TX.texte.split(/\s+/).slice(0,8).join(" ")+"…"; $("nomTxt").textContent=TX.titre||"Je lis"; $("niveauHaut").textContent=TX.niveau;
+  rendreTexte(); rendreAutoeval(); R.bilan.forEach((v,i)=>$("bilan"+(i+1)).value=v||"");
+  afficher(); if(valides.size===4) genererTrace();
+  if(repris) feedback(true,"Je reprends mon travail là où je l’avais laissé.");
+  scrollTo(0,0);
+}
+function autreTexte(){ sauver(); speechSynthesis&&speechSynthesis.cancel(); location.href=location.pathname; }
+function listerReprises(){
+  const it=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k.startsWith("montexte:")&&k!=="montexte:langue"){ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.TX) it.push(d);} } }catch(e){}
+  it.sort((a,b)=>b.date-a.date); if(!it.length) return; window._rep=it;
+  $("reprises").innerHTML=`<div class="soft"><h3>Reprendre un texte déjà commencé</h3>${it.slice(0,6).map((d,i)=>`<div class="row" style="justify-content:space-between;margin-top:6px"><span><b>${esc(d.TX.titre||d.TX.texte.slice(0,50)+"…")}</b> <span class="muted">· ${d.TX.niveau} · ${d.valides.length}/4 étapes</span></span><button class="btn btn-blanc btn-p" onclick="TX=_rep[${i}].TX;ouvrirTravail()">Reprendre</button></div>`).join("")}</div>`;
+}
+
+/* ================= Le texte : affichage, mots cliquables, lecture ================= */
+function rendreTexte(){
+  const lex=new Set(R.mots.map(m=>norm(m.mot)));
+  const paras=TX.texte.split(/\n\s*\n|\n/).filter(p=>p.trim());
+  $("texte").style.fontSize=tailleTxt+"rem";
+  $("texte").innerHTML=paras.map((p,i)=>`<p data-p="${i}"><span class="numP">${i+1}</span>${p.split(/([.!?…]+[»"”)]?\s+)/).reduce((acc,x,j,a)=>{ if(j%2===0) acc.push(x+(a[j+1]||"")); return acc; },[]).filter(Boolean).map(ph=>`<span class="phrase">${
+    ph.split(/([A-Za-zÀ-ÖØ-öø-ÿŒœ’'-]+)/).map(tk=>/^[A-Za-zÀ-ÖØ-öø-ÿŒœ’'-]+$/.test(tk)?`<span class="w${lex.has(norm(tk))?" lex":""}">${esc(tk)}</span>`:esc(tk)).join("")}</span>`).join("")}</p>`).join("");
+}
+let motCourant=null;
+$("texte").addEventListener("click",e=>{
+  const w=e.target.closest(".w"); if(!w){ fermerBulle(); return; }
+  if(String(getSelection())) return;   // l'élève sélectionne : on ne gêne pas
+  e.stopPropagation(); motCourant=w.textContent.replace(/^[’'-]+|[’'-]+$/g,"");
+  const b=$("bulleMot"), r=w.getBoundingClientRect();
+  const dans=R.mots.some(m=>norm(m.mot)===norm(motCourant));
+  b.innerHTML=`<b style="font-size:1.1rem">${esc(motCourant)}</b><div class="row" style="margin-top:6px">
+    <button class="btn btn-blanc btn-p" onclick="parler(motCourant)">🔊 ${t("ecouter")}</button>
+    <button class="btn btn-blanc btn-p" onclick="traduire(motCourant)">🌐 ${t("traduire")}</button>
+    <button class="btn ${dans?"btn-blanc":"btn-bleu"} btn-p" onclick="ajouterMot(motCourant);fermerBulle()" ${dans?"disabled":""}>${dans?"✔ déjà dans":"➕"} ${t("ajouter")}</button></div>`;
+  b.classList.remove("cache");
+  const x=Math.min(innerWidth-b.offsetWidth-10,Math.max(10,r.left+scrollX-20)); b.style.left=x+"px"; b.style.top=(r.bottom+scrollY+6)+"px";
+});
+function fermerBulle(){ $("bulleMot").classList.add("cache"); }
+document.addEventListener("click",e=>{ if(!e.target.closest("#bulleMot")&&!e.target.closest("#texte")) fermerBulle(); });
+function voixFr(){ const v=speechSynthesis.getVoices(); return v.find(x=>/^fr(-|_)FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang)); }
+function parler(txt,rate){ if(!("speechSynthesis" in window)) return alert("La lecture à voix haute n’est pas disponible sur ce navigateur.");
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(txt); u.lang="fr-FR"; const v=voixFr(); if(v) u.voice=v; u.rate=rate||(TX&&TX.niveau==="A1"?.8:.9); speechSynthesis.speak(u); return u; }
+let lecture=false;
+function lireTout(){
+  if(lecture){ speechSynthesis.cancel(); lecture=false; $("btnLire").textContent="🔊 Écouter"; document.querySelectorAll(".phrase.lue").forEach(x=>x.classList.remove("lue")); return; }
+  const sel=String(getSelection()).trim(); if(sel){ parler(sel); return; }
+  const ph=[...document.querySelectorAll("#texte .phrase")]; let i=0; lecture=true; $("btnLire").textContent="⏹ Arrêter";
+  const suite=()=>{ document.querySelectorAll(".phrase.lue").forEach(x=>x.classList.remove("lue")); if(!lecture||i>=ph.length){ lecture=false; $("btnLire").textContent="🔊 Écouter"; return; }
+    const p=ph[i++]; p.classList.add("lue"); p.scrollIntoView({block:"nearest",behavior:"smooth"}); const u=parler(p.textContent); u.onend=suite; u.onerror=()=>{lecture=false;$("btnLire").textContent="🔊 Écouter";}; };
+  suite();
+}
+function taille(d){ tailleTxt=Math.min(1.8,Math.max(.85,tailleTxt+d*.12)); $("texte").style.fontSize=tailleTxt+"rem"; }
+function basculerFocus(){ $("texte").classList.toggle("focus"); $("btnFocus").classList.toggle("on"); }
+$("texte").addEventListener("mouseover",e=>{ const p=e.target.closest(".phrase"); if(!p||!$("texte").classList.contains("focus")) return; document.querySelectorAll(".phrase.vise").forEach(x=>x.classList.remove("vise")); p.classList.add("vise"); });
+function traduire(mot){ const tl=langue==="fr"?"en":langue; window.open(`https://translate.google.com/?sl=fr&tl=${tl}&text=${encodeURIComponent(mot)}&op=translate`,"_blank","noopener"); }
+
+/* ================= Étapes ================= */
+function onglets(){
+  $("tabs").innerHTML=ETAPES.map((s,i)=>`<button class="tab ${i===etape?"active":""} ${valides.has(i)?"ok":""}" onclick="aller(${i})"><small>Étape ${i+1}</small><strong>${s.badge}</strong><small>${s.court}</small></button>`).join("");
+  $("progTxt").textContent=`${valides.size} / 4`; $("progBar").style.width=(25*valides.size)+"%";
+  const fini=valides.size===4; $("trace").classList.toggle("verrou",!fini);
+  $("traceInfo").textContent=fini?"Toutes les étapes sont validées. Je complète mon bilan, puis je génère ma trace.":"Cette partie s’ouvre quand les 4 étapes sont validées.";
+}
+function aller(i){ if(i<0||i>3) return; lireEtape(); etape=i; afficher(); sauver(); }
+function afficher(){
+  const s=ETAPES[etape];
+  $("badge").textContent=s.badge+" · "+TX.niveau; $("titreEtape").textContent=s.titre; $("introEtape").textContent=s.intro;
+  $("aideTxt").classList.add("cache"); $("aideTxt").dataset.t=""; document.querySelectorAll(".aides .chip").forEach(b=>b.classList.remove("on"));
+  $("btnTrad").classList.toggle("cache",langue==="fr"); $("btnTrad").textContent=langue==="fr"?"Dans ma langue":"Dans ma langue · "+LANGUES[langue];
+  $("feedback").classList.add("cache"); $("btnPrec").disabled=etape===0; $("btnSuiv").disabled=etape===3;
+  $("corps").innerHTML=(langue!=="fr"?`<div class="trad" dir="${RTL.has(langue)?"rtl":"ltr"}">${esc(TRAD[s.id][langue])}</div>`:"")+RENDUS[s.id]();
+  if(s.id==="expliquer") majCompte();
+  if(valides.has(etape)) feedback(true,"Étape déjà validée. Je peux encore modifier ma réponse.");
+  onglets();
+}
+function aide(k,btn){
+  const box=$("aideTxt"), s=ETAPES[etape];
+  document.querySelectorAll(".aides .chip").forEach(b=>b.classList.toggle("on",b===btn&&box.dataset.t!==k));
+  if(box.dataset.t===k){ box.classList.add("cache"); box.dataset.t=""; return; }
+  box.dir="ltr";
+  if(k==="objectif") box.innerHTML="<b>Mon objectif :</b> "+esc(s.objectif)+`<div class="muted" style="font-size:.85rem;margin-top:4px">Niveau ${TX.niveau} : ${esc(exigences())}</div>`;
+  if(k==="methode") box.innerHTML="<b>Comment faire :</b> "+esc(s.methode);
+  if(k==="langue"){ box.textContent=TRAD[s.id][langue]||""; box.dir=RTL.has(langue)?"rtl":"ltr"; }
+  box.dataset.t=k; box.classList.remove("cache");
+}
+function exigences(){ const n=N(), id=ETAPES[etape].id;
+  return {decouvrir:n.phraseDecouvrir?"le type de texte, le sujet et une phrase.":"le type de texte et le sujet (un ou deux mots).",
+    reperer:`au moins ${n.infos} informations.`, retenir:`au moins ${n.mots} mots avec leur sens.`,
+    expliquer:`au moins ${n.phrases} phrases, ${n.longueur} mots, ${n.motsLex} mot(s) de mon lexique${n.connecteur?" et un mot de liaison (parce que, donc, mais…)":""}.`}[id]; }
+function changerLangue(l){ langue=l; try{localStorage.setItem("montexte:langue",l);}catch(e){} majTradChoix(); if(TX) afficher(); }
+function majTradChoix(){ const b=$("tradChoix"); if(langue==="fr"){ b.classList.add("cache"); return; } b.textContent=TRAD.choix[langue]; b.dir=RTL.has(langue)?"rtl":"ltr"; b.classList.remove("cache"); }
+
+const RENDUS={
+ decouvrir(){ const r=R.decouvrir, n=N();
+  return `<div class="soft"><h3>1. C’est quel type de texte ?</h3><div class="row">${TYPES_TEXTE.map(x=>`<label class="chip ${r.type===x?"on":""}" style="cursor:pointer"><input type="radio" name="typeT" value="${esc(x)}" class="cache" ${r.type===x?"checked":""} onchange="document.querySelectorAll('[name=typeT]').forEach(y=>y.parentElement.classList.toggle('on',y.checked));sauver()">${esc(x)}</label>`).join("")}</div></div>
+   <div class="soft"><h3>2. De quoi parle le texte ?</h3>
+    <label class="f">Le sujet${TX.niveau==="A1"?" <small>(un ou deux mots suffisent)</small>":""}<input class="c" id="d_sujet" value="${esc(r.sujet||"")}" placeholder="${TX.niveau==="A1"?"Ex. : l’école, la famille…":"Le texte parle de…"}"></label>
+    <div class="grid2"><label class="f">Le titre ou la source <small>(si je les vois)</small><input class="c" id="d_source" value="${esc(r.source||"")}"></label>
+    <label class="f">Combien de paragraphes ?<input class="c" id="d_paras" type="number" min="1" value="${esc(r.paras||"")}"></label></div>
+    ${n.phraseDecouvrir?`<label class="f">Ce que je comprends en premier <small>(une phrase, même simple)</small><textarea class="c" id="d_phrase">${esc(r.phrase||"")}</textarea></label>`:""}</div>`; },
+ reperer(){ const r=R.reperer, n=N();
+  return `<div class="soft"><h3>Je relève les informations <small class="muted">(au moins ${n.infos})</small></h3>
+   <p class="muted" style="margin:0 0 4px;font-size:.88rem">Je sélectionne des mots dans le texte, puis je clique sur <b>📌</b>. Je peux aussi écrire.</p>
+   ${INFOS.map(([k,lab,ph])=>`<div class="ligne-info" style="grid-template-columns:110px 1fr auto"><b>${lab}</b><input class="c" id="r_${k}" value="${esc(r[k]||"")}" placeholder="${ph}" style="margin:0">
+     <button type="button" class="chrono" onmousedown="event.preventDefault()" onclick="epingler('r_${k}')" title="Mettre ici les mots sélectionnés dans le texte">📌</button></div>`).join("")}</div>
+   ${TX.niveau!=="A1"?`<div class="soft"><h3>L’idée la plus importante</h3><textarea class="c" id="r_idee" placeholder="Pour moi, l’idée la plus importante est…">${esc(r.idee||"")}</textarea></div>`:""}`; },
+ retenir(){ const n=N();
+  return `<div class="soft"><h3>Mon lexique <small class="muted">(au moins ${n.mots} mots)</small></h3>
+   <p class="muted" style="margin:0;font-size:.88rem">👆 Je clique sur un mot dans le texte, puis sur « ➕ ${esc(t("ajouter"))} ».</p>
+   <div id="listeMots">${R.mots.map((m,i)=>`<div class="mot" data-i="${i}">
+    <div><input class="c" data-m="mot" value="${esc(m.mot||"")}" style="margin:0;font-weight:800">
+      <select class="c" data-m="cat">${["",...CATEGORIES].map(c=>`<option ${m.cat===c?"selected":""} value="${esc(c)}">${c||"C’est…"}</option>`).join("")}</select></div>
+    <div><textarea class="c" data-m="sens" placeholder="${esc(t("sens"))}" style="margin:0;min-height:72px" dir="auto">${esc(m.sens||"")}</textarea>
+      ${TX.niveau==="B1"?`<input class="c" data-m="exemple" value="${esc(m.exemple||"")}" placeholder="Ma phrase avec ce mot (facultatif)">`:""}</div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+      <button class="btn btn-blanc btn-p" onclick="parler(R.mots[${i}].mot)">🔊</button>
+      <button class="btn btn-blanc btn-p" onclick="traduire(R.mots[${i}].mot)">🌐 ${esc(UI.traduire[langue])}</button>
+      <button class="btn btn-blanc btn-p" style="color:#b91c1c" onclick="supprimerMot(${i})">Supprimer</button></div></div>`).join("")||'<p class="muted" style="margin-top:10px">Mon lexique est vide pour l’instant.</p>'}</div>
+   <button class="btn btn-blanc btn-p" style="margin-top:10px" onclick="ajouterMot('')">+ Écrire un mot moi-même</button></div>`; },
+ expliquer(){ const n=N();
+  return `<div class="grid2" style="margin-top:12px">
+    <div class="soft" style="margin:0"><h3>Des débuts de phrase</h3>${AMORCES[TX.niveau].map(a=>`<button class="amorce" onclick="inserer('\\n${esc(a.replace(/…$/,"")).replace(/'/g,"\\'")} ')">${esc(a)}</button>`).join("")}
+     ${n.connecteur?`<h3 style="margin-top:10px">Des mots de liaison</h3><div class="row">${CONNECTEURS.map(c=>`<button class="chip" onclick="inserer('${c.replace(/'/g,"\\'")} ')">${c}</button>`).join("")}</div>`:""}</div>
+    <div class="soft" style="margin:0"><h3>Mes mots</h3><div class="row" style="margin-top:6px">${R.mots.filter(m=>m.mot).map(m=>`<button class="chip" onclick="inserer('${esc(m.mot).replace(/'/g,"\\'")} ')">${esc(m.mot)}</button>`).join("")||'<span class="muted">Ajoute des mots à l’étape 3.</span>'}</div>
+     ${INFOS.some(([k])=>R.reperer[k])?`<h3 style="margin-top:12px">Mes informations</h3><ul style="margin:0;padding-left:18px;font-size:.9rem">${INFOS.filter(([k])=>R.reperer[k]).map(([k,lab])=>`<li><b>${lab}</b> ${esc(R.reperer[k])}</li>`).join("")}</ul>`:""}</div></div>
+   <div class="soft"><h3>Mon explication</h3><textarea class="c" id="e_texte" style="min-height:170px" oninput="majCompte()" placeholder="${esc(AMORCES[TX.niveau][0])}">${esc(R.texte||"")}</textarea>
+    <div style="margin-top:6px"><span id="compte" class="compte"></span></div>
+    <div class="row" style="margin-top:6px"><button class="btn btn-blanc btn-p" onclick="parler($('e_texte').value)">🔊 Écouter mon texte</button></div></div>`; }
+};
+
+/* ================= Réponses ================= */
+function lireEtape(){
+  const id=ETAPES[etape].id, v=x=>{const e=$(x);return e?e.value:undefined;};
+  if(id==="decouvrir"&&$("d_sujet")){ const c=document.querySelector("[name=typeT]:checked"); Object.assign(R.decouvrir,{type:c?c.value:R.decouvrir.type,sujet:v("d_sujet"),source:v("d_source"),paras:v("d_paras"),phrase:v("d_phrase")??R.decouvrir.phrase}); }
+  if(id==="reperer"&&$("r_qui")){ INFOS.forEach(([k])=>R.reperer[k]=v("r_"+k)); if($("r_idee")) R.reperer.idee=v("r_idee"); }
+  if(id==="retenir") document.querySelectorAll("#listeMots .mot").forEach(el=>{ const m=R.mots[+el.dataset.i]; el.querySelectorAll("[data-m]").forEach(f=>m[f.dataset.m]=f.value); });
+  if(id==="expliquer"&&$("e_texte")) R.texte=$("e_texte").value;
+}
+document.addEventListener("input",e=>{ if(e.target.closest("#corps")){ clearTimeout(window._s); window._s=setTimeout(()=>{ sauver(); if(e.target.dataset.m==="mot") rendreTexte(); },400); } });
+document.addEventListener("change",e=>{ if(e.target.closest("#corps")) sauver(); });
+function epingler(id){
+  const s=String(getSelection()).replace(/\s+/g," ").trim();
+  if(!s) return feedback(false,"Sélectionne d’abord des mots dans le texte (à gauche), puis clique sur 📌.");
+  const inp=$(id); inp.value=inp.value.trim()?inp.value.trim()+" ; "+s:s; getSelection().removeAllRanges(); sauver();
+}
+function ajouterMot(mot){
+  lireEtape();
+  if(mot&&R.mots.some(m=>norm(m.mot)===norm(mot))) return;
+  R.mots.push({mot:mot||"",sens:"",cat:"",exemple:""}); rendreTexte();
+  if(ETAPES[etape].id==="retenir"){ afficher(); const all=document.querySelectorAll('#listeMots [data-m="'+(mot?"sens":"mot")+'"]'); all[all.length-1].focus(); }
+  else feedback(true,`« ${mot} » est ajouté à mon lexique (étape 3).`);
+  sauver();
+}
+function supprimerMot(i){ lireEtape(); R.mots.splice(i,1); rendreTexte(); afficher(); sauver(); }
+function inserer(txt){ const ta=$("e_texte"); const d=ta.selectionStart??ta.value.length; const v=ta.value; if(txt.startsWith("\n")&&(d===0||v.trim()==="")) txt=txt.slice(1);
+  ta.value=v.slice(0,d)+txt+v.slice(ta.selectionEnd??d); ta.focus(); ta.selectionStart=ta.selectionEnd=d+txt.length; majCompte(); sauver(); }
+const motsUtilises=()=>{ const s=" "+norm(R.texte)+" "; return R.mots.filter(m=>m.mot&&s.includes(norm(m.mot.trim()))); };
+const aConnecteur=()=>{ const s=" "+norm(R.texte).replace(/[^a-z' ]/g," ")+" "; return CONNECTEURS.some(c=>s.includes(" "+norm(c)+" ")); };
+const nbPhrases=s=>String(s||"").split(/[.!?\n]+/).filter(p=>nbMots(p)>=3).length;
+function copieDuTexte(){ // repère une phrase recopiée telle quelle (au moins 10 mots consécutifs du texte source)
+  const src=" "+norm(TX.texte).replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ")+" ", mots=norm(R.texte).replace(/[^a-z0-9' ]/g," ").split(/\s+/).filter(Boolean);
+  for(let i=0;i+10<=mots.length;i++) if(src.includes(" "+mots.slice(i,i+10).join(" ")+" ")) return true; return false; }
+function majCompte(){ if(!$("e_texte")) return; R.texte=$("e_texte").value; const n=N(), p=nbPhrases(R.texte), u=motsUtilises().length, m=nbMots(R.texte);
+  const ok=(c,txt)=>`<span class="${c?"compte ok":""}">${c?"✔":"•"} ${txt}</span>`;
+  $("compte").innerHTML=[ok(p>=n.phrases,`${p} phrase(s) sur ${n.phrases}`),ok(m>=n.longueur,`${m} mots sur ${n.longueur}`),ok(u>=n.motsLex,`${u} mot(s) de mon lexique sur ${n.motsLex}`),n.connecteur?ok(aConnecteur(),"un mot de liaison"):""].filter(Boolean).join(" · ")
+    +(copieDuTexte()?`<div style="color:#b45309;margin-top:4px">⚠ Une partie de ton texte est recopiée du texte d’origine : essaie de l’écrire avec tes mots.</div>`:""); }
+
+/* ================= Vérification ================= */
+function feedback(ok,m){ const f=$("feedback"); f.className="feedback "+(ok?"ok":"ko"); f.textContent=m; }
+function valider(){
+  lireEtape(); const id=ETAPES[etape].id, n=N(); let ok=false, msg="";
+  if(id==="decouvrir"){ const r=R.decouvrir; const manque=[!r.type&&"le type de texte",!nbMots(r.sujet)&&"le sujet",n.phraseDecouvrir&&nbMots(r.phrase)<4&&"une phrase (au moins 4 mots)"].filter(Boolean);
+    ok=!manque.length; msg=ok?"Bravo : tu sais de quoi parle le texte.":"Il manque encore : "+manque.join(", ")+"."; }
+  if(id==="reperer"){ const k=INFOS.filter(([x])=>nbMots(R.reperer[x])>=1).length; ok=k>=n.infos;
+    msg=ok?`Bravo : tu as relevé ${k} informations.`:`Tu as relevé ${k} information(s). Il en faut au moins ${n.infos} pour le niveau ${TX.niveau}. Sélectionne des mots dans le texte et utilise 📌.`; }
+  if(id==="retenir"){ const c=R.mots.filter(m=>m.mot&&m.sens).length; ok=c>=n.mots;
+    msg=ok?`Bravo : ton lexique contient ${c} mots avec leur sens.`:`Tu as ${c} mot(s) avec leur sens. Il en faut au moins ${n.mots} : clique sur les mots du texte, puis écris leur sens.`; }
+  if(id==="expliquer"){ const p=nbPhrases(R.texte), u=motsUtilises().length, m=nbMots(R.texte), c=!n.connecteur||aConnecteur();
+    ok=p>=n.phrases&&u>=n.motsLex&&m>=n.longueur&&c;
+    msg=ok?"Bravo : ton explication est complète. Tu peux maintenant faire ta trace de travail."+(copieDuTexte()?" (Conseil : réécris avec tes mots la partie recopiée.)":""):`Pour le niveau ${TX.niveau}, ton texte doit avoir ${exigences()} Regarde le compteur sous ton texte.`; }
+  if(ok) valides.add(etape); else valides.delete(etape);
+  feedback(ok,msg+(ok&&etape<3?" Tu peux passer à l’étape suivante.":"")); onglets(); sauver();
+  if(ok&&valides.size===4){ genererTrace(); setTimeout(()=>$("trace").scrollIntoView({behavior:"smooth"}),600); }
+}
+
+/* ================= Trace ================= */
+function rendreAutoeval(){ $("autoeval").innerHTML=OBJECTIFS.map((o,i)=>`<div style="margin-bottom:10px"><b>${esc(o)}</b><div class="niveaux">${["À retravailler","En cours","Réussi"].map(x=>`<label><input type="radio" name="ae${i}" value="${x}" ${R.auto["ae"+i]===x?"checked":""} onchange="sauver()"><span>${x}</span></label>`).join("")}</div></div>`).join(""); }
+function genererTrace(){
+  lireEtape(); const d=R.decouvrir, r=R.reperer;
+  const T=[`${TX.titre||"Mon texte"}${TX.matiere?" – "+TX.matiere:""} (niveau ${TX.niveau})`, "",
+    "1. Je découvre", `C’est ${d.type||"…"}. Le texte parle de : ${d.sujet||"…"}.`, d.source?`Titre / source : ${d.source}.`:"", d.phrase?`Ce que j’ai compris en premier : ${d.phrase}`:"", "",
+    "2. Je repère", ...INFOS.filter(([k])=>r[k]).map(([k,lab])=>`${lab} ${r[k]}`), r.idee?`L’idée la plus importante : ${r.idee}`:"", "",
+    "3. Je retiens – mon lexique", ...R.mots.filter(m=>m.mot).map(m=>`• ${m.mot}${m.cat?" ("+m.cat+")":""} : ${m.sens||"…"}${m.exemple?" — "+m.exemple:""}`), "",
+    "4. J’explique", R.texte||"…", "",
+    "Mon bilan", `Ce que j’ai bien compris : ${$("bilan1").value||"…"}`, `Ce que je dois encore travailler : ${$("bilan2").value||"…"}`, `Les aides utiles : ${$("bilan3").value||"…"}`, "",
+    "Je m’évalue", ...OBJECTIFS.map((o,i)=>{const c=document.querySelector(`input[name=ae${i}]:checked`);return `– ${o} → ${c?c.value:"non renseigné"}`;})];
+  $("traceFinale").textContent=T.filter((x,i,a)=>!(x===""&&a[i-1]==="")).join("\n").replace(/\n{3,}/g,"\n\n"); sauver();
+}
+function copierTrace(){ genererTrace(); navigator.clipboard&&navigator.clipboard.writeText($("traceFinale").textContent).then(()=>{ const x=$("traceInfo"),o=x.textContent; x.textContent="✔ Trace copiée."; setTimeout(()=>x.textContent=o,2500); },()=>{}); }
+function telecharger(){ genererTrace(); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([$("traceFinale").textContent],{type:"text/plain;charset=utf-8"})); a.download="ma-trace-texte.txt"; a.click(); }
+
+/* ================= Démarrage ================= */
+(function(){
+  try{ langue=localStorage.getItem("montexte:langue")||"fr"; }catch(e){}
+  $("maLangue").innerHTML=Object.entries(LANGUES).map(([k,n])=>`<option value="${k}" ${k===langue?"selected":""}>${n}</option>`).join("");
+  const q=new URLSearchParams(location.search); if(NIVEAUX[q.get("niveau")]) niveauChoisi=q.get("niveau");
+  rendreNiveaux(); majTradChoix(); listerReprises();
+  if("speechSynthesis" in window) speechSynthesis.getVoices();
+})();
+window.addEventListener("beforeunload",()=>{ if(TX) sauver(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") fermerBulle(); });
+</script>
+</body>
+</html>
